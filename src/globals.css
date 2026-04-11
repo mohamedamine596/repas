@@ -1,0 +1,100 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 30 50% 98%;
+    --foreground: 150 30% 15%;
+    --card: 0 0% 100%;
+    --card-foreground: 150 30% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 150 30% 15%;
+    --primary: 152 55% 24%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 30 40% 95%;
+    --secondary-foreground: 150 30% 15%;
+    --muted: 30 20% 94%;
+    --muted-foreground: 150 10% 45%;
+    --accent: 14 76% 59%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 30 15% 89%;
+    --input: 30 15% 89%;
+    --ring: 152 55% 24%;
+    --radius: 0.75rem;
+  }
+}
+
+/* Dark mode CSS variables */
+.dark {
+  --background: 150 20% 8%;
+  --foreground: 30 20% 94%;
+  --card: 150 15% 11%;
+  --card-foreground: 30 20% 94%;
+  --popover: 150 15% 11%;
+  --popover-foreground: 30 20% 94%;
+  --primary: 152 45% 38%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 150 12% 16%;
+  --secondary-foreground: 30 15% 90%;
+  --muted: 150 10% 18%;
+  --muted-foreground: 150 5% 58%;
+  --accent: 14 76% 59%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 150 10% 20%;
+  --input: 150 10% 20%;
+  --ring: 152 45% 38%;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    overscroll-behavior-y: none;
+  }
+  /* Globally disable text selection on interactive elements */
+  button, [role="button"], a, nav {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  /* Hide scrollbars on touch devices */
+  @media (hover: none) and (pointer: coarse) {
+    ::-webkit-scrollbar {
+      display: none;
+    }
+    * {
+      scrollbar-width: none;
+    }
+  }
+}
+
+.leaflet-container {
+  border-radius: 0.75rem;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
+}
