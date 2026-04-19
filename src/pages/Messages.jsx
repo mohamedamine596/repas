@@ -1,54 +1,34 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MessageCircle, Loader2, ArrowRight } from "lucide-react";
+import { MessageCircle, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { useAuth } from "@/lib/AuthContext";
+import { backendApi } from "@/api/backendClient";
 
 export default function Messages() {
-  const [user, setUser] = useState(null);
+  const { user, token, isLoadingAuth, navigateToLogin } = useAuth();
 
   useEffect(() => {
-    base44.auth.me().then(setUser).catch(() => base44.auth.redirectToLogin());
-  }, []);
+    if (!isLoadingAuth && !user) {
+      navigateToLogin();
+    }
+  }, [isLoadingAuth, user, navigateToLogin]);
 
-  const { data: messages = [], isLoading } = useQuery({
-    queryKey: ["allMessages", user?.email],
+  const { data: convList = [], isLoading } = useQuery({
+    queryKey: ["conversations", user?.email],
     queryFn: async () => {
-      const sent = await base44.entities.Message.filter({ sender_email: user.email }, "-created_date", 200);
-      const received = await base44.entities.Message.filter({ receiver_email: user.email }, "-created_date", 200);
-      return [...sent, ...received].sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+      const data = await backendApi.messages.listConversations(token);
+      return Array.isArray(data?.conversations) ? data.conversations : [];
     },
-    enabled: !!user?.email,
+    enabled: !!user?.email && !!token,
   });
 
-  // Group by conversation partner
-  const conversations = {};
-  messages.forEach((msg) => {
-    const partner = msg.sender_email === user?.email ? msg.receiver_email : msg.sender_email;
-    const partnerName = msg.sender_email === user?.email ? msg.receiver_name : msg.sender_name;
-    if (!conversations[partner]) {
-      conversations[partner] = {
-        partnerEmail: partner,
-        partnerName: partnerName || partner,
-        lastMessage: msg,
-        unread: 0,
-      };
-    }
-    if (msg.receiver_email === user?.email && !msg.is_read) {
-      conversations[partner].unread++;
-    }
-  });
-
-  const convList = Object.values(conversations).sort(
-    (a, b) => new Date(b.lastMessage.created_date) - new Date(a.lastMessage.created_date)
-  );
-
-  if (!user) return null;
+  if (isLoadingAuth || !user) return null;
 
   return (
     <div className="max-w-2xl mx-auto space-y-6 pb-24 md:pb-8">
@@ -84,27 +64,22 @@ export default function Messages() {
                     <div className="flex items-center justify-between">
                       <span className="font-semibold text-sm text-gray-900">{conv.partnerName}</span>
                       <span className="text-xs text-gray-400">
-                        {format(new Date(conv.lastMessage.created_date), "d MMM HH:mm", { locale: fr })}
+                        {format(new Date(conv.lastMessage.createdAt), "d MMM HH:mm", { locale: fr })}
                       </span>
                     </div>
                     <div className="flex items-center justify-between mt-1">
                       <p className="text-sm text-gray-500 truncate pr-4">
-                        {conv.lastMessage.sender_email === user.email && (
+                        {conv.lastMessage.fromEmail === user.email && (
                           <span className="text-gray-400">Vous : </span>
                         )}
                         {conv.lastMessage.content}
                       </p>
-                      {conv.unread > 0 && (
+                      {conv.unreadCount > 0 && (
                         <Badge className="bg-[#E8634A] text-white border-0 text-xs min-w-[20px] justify-center">
-                          {conv.unread}
+                          {conv.unreadCount}
                         </Badge>
                       )}
                     </div>
-                    {conv.lastMessage.meal_title && (
-                      <p className="text-xs text-[#1B5E3B] mt-1">
-                        📦 {conv.lastMessage.meal_title}
-                      </p>
-                    )}
                   </div>
                 </CardContent>
               </Card>

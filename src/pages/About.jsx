@@ -4,7 +4,6 @@ import { createPageUrl } from "@/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Heart, Users, Globe, Leaf, Shield, ArrowRight } from "lucide-react";
-import AppLogo from "../components/AppLogo";
 
 const LOGO_URL = "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69b033390db1712a51a56d65/4d38fd5d2_generated_image.png";
 

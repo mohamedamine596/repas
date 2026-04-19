@@ -1,0 +1,9 @@
+{
+  "name": "Repas Solidaire",
+  "short_name": "Repas",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1B5E3B",
+  "icons": []
+}

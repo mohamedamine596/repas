@@ -28,6 +28,33 @@ VITE_BASE44_APP_BASE_URL=https://my-to-do-list-81bfaad7.base44.app
 
 Run the app: `npm run dev`
 
+## Run with Docker
+
+This project can be built and served as a production container.
+
+Build the image (replace values with your own):
+
+```bash
+docker build \
+	--build-arg VITE_BASE44_APP_ID=your_app_id \
+	--build-arg VITE_BASE44_APP_BASE_URL=your_backend_url \
+	--build-arg VITE_BASE44_FUNCTIONS_VERSION=your_functions_version \
+	-t coeur-table-partage:latest .
+```
+
+Run the container:
+
+```bash
+docker run --name coeur-table-partage -p 8080:80 -d coeur-table-partage:latest
+```
+
+Open the app at `http://localhost:8080`.
+
+Notes:
+
+- Vite environment variables are embedded at build time, so changing them requires rebuilding the image.
+- SPA routing is supported through the included Nginx fallback to `index.html`.
+
 **Publish your changes**
 
 Open [Base44.com](http://Base44.com) and click on Publish.

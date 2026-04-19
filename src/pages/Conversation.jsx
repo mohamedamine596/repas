@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, Send, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { useAuth } from "@/lib/AuthContext";
+import { backendApi } from "@/api/backendClient";
 
 export default function Conversation() {
   const navigate = useNavigate();
@@ -14,55 +15,39 @@ export default function Conversation() {
   const urlParams = new URLSearchParams(window.location.search);
   const partnerEmail = urlParams.get("partner");
 
-  const [user, setUser] = useState(null);
+  const { user, token, isLoadingAuth, navigateToLogin } = useAuth();
   const [newMessage, setNewMessage] = useState("");
   const bottomRef = useRef(null);
 
   useEffect(() => {
-    base44.auth.me().then(setUser).catch(() => base44.auth.redirectToLogin());
-  }, []);
+    if (!isLoadingAuth && !user) {
+      navigateToLogin();
+    }
+  }, [isLoadingAuth, user, navigateToLogin]);
 
   const { data: messages = [], isLoading } = useQuery({
     queryKey: ["conversation", user?.email, partnerEmail],
     queryFn: async () => {
-      const sent = await base44.entities.Message.filter(
-        { sender_email: user.email, receiver_email: partnerEmail },
-        "created_date", 200
-      );
-      const received = await base44.entities.Message.filter(
-        { sender_email: partnerEmail, receiver_email: user.email },
-        "created_date", 200
-      );
+      const data = await backendApi.messages.listWithPartner(token, partnerEmail);
+      const list = Array.isArray(data?.messages) ? data.messages : [];
 
-      // Mark received as read
-      for (const msg of received) {
-        if (!msg.is_read) {
-          base44.entities.Message.update(msg.id, { is_read: true });
+      for (const msg of list) {
+        if (msg.toEmail === user.email && !msg.isRead) {
+          await backendApi.messages.markRead(token, msg.id);
         }
       }
 
-      return [...sent, ...received].sort(
-        (a, b) => new Date(a.created_date) - new Date(b.created_date)
-      );
+      return list.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
     },
-    enabled: !!user?.email && !!partnerEmail,
+    enabled: !!user?.email && !!partnerEmail && !!token,
     refetchInterval: 5000,
   });
 
   const sendMutation = useMutation({
-    mutationFn: () =>
-      base44.entities.Message.create({
-        sender_email: user.email,
-        sender_name: user.full_name,
-        receiver_email: partnerEmail,
-        receiver_name: messages[0]?.sender_email === partnerEmail
-          ? messages[0]?.sender_name
-          : messages[0]?.receiver_name || partnerEmail,
-        content: newMessage,
-      }),
+    mutationFn: () => backendApi.messages.send(token, { toEmail: partnerEmail, content: newMessage }),
     onSuccess: () => {
       setNewMessage("");
-      queryClient.invalidateQueries(["conversation", user?.email, partnerEmail]);
+      queryClient.invalidateQueries({ queryKey: ["conversation", user?.email, partnerEmail] });
     },
   });
 
@@ -71,11 +56,11 @@ export default function Conversation() {
   }, [messages]);
 
   const partnerName =
-    messages.find((m) => m.sender_email === partnerEmail)?.sender_name ||
-    messages.find((m) => m.receiver_email === partnerEmail)?.receiver_name ||
+    messages.find((m) => m.fromEmail === partnerEmail)?.fromEmail ||
+    messages.find((m) => m.toEmail === partnerEmail)?.toEmail ||
     partnerEmail;
 
-  if (!user) return null;
+  if (isLoadingAuth || !user) return null;
 
   return (
     <div className="max-w-2xl mx-auto flex flex-col" style={{ height: "calc(100vh - 160px)" }}>
@@ -105,7 +90,7 @@ export default function Conversation() {
           <p className="text-center text-gray-400 text-sm py-10">Commencez la conversation !</p>
         ) : (
           messages.map((msg) => {
-            const isMe = msg.sender_email === user.email;
+            const isMe = msg.fromEmail === user.email;
             return (
               <div key={msg.id} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
                 <div
@@ -117,7 +102,7 @@ export default function Conversation() {
                 >
                   <p className="text-sm leading-relaxed">{msg.content}</p>
                   <p className={`text-[10px] mt-1 ${isMe ? "text-white/60" : "text-gray-400"}`}>
-                    {format(new Date(msg.created_date), "HH:mm", { locale: fr })}
+                    {format(new Date(msg.createdAt), "HH:mm", { locale: fr })}
                   </p>
                 </div>
               </div>

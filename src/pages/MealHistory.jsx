@@ -1,30 +1,37 @@
-import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import React, { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { backendApi } from "@/api/backendClient";
+import { useAuth } from "@/lib/AuthContext";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Loader2, Gift, Heart } from "lucide-react";
 import MealCard from "../components/meals/MealCard";
 
 export default function MealHistory() {
-  const [user, setUser] = useState(null);
+  const { user, isLoadingAuth, navigateToLogin } = useAuth();
 
   useEffect(() => {
-    base44.auth.me().then(setUser).catch(() => base44.auth.redirectToLogin());
-  }, []);
+    if (!isLoadingAuth && !user) {
+      navigateToLogin();
+    }
+  }, [isLoadingAuth, user, navigateToLogin]);
 
   const { data: myDonations = [], isLoading: loadingDonations } = useQuery({
     queryKey: ["historyDonations", user?.email],
-    queryFn: () => base44.entities.Meal.filter({ donor_email: user.email }, "-created_date", 100),
+    queryFn: async () => {
+      return backendApi.meals.list({ donor_email: user.email }, "-created_date", 100);
+    },
     enabled: !!user?.email,
   });
 
   const { data: myReservations = [], isLoading: loadingReservations } = useQuery({
     queryKey: ["historyReservations", user?.email],
-    queryFn: () => base44.entities.Meal.filter({ reserved_by: user.email }, "-created_date", 100),
+    queryFn: async () => {
+      return backendApi.meals.list({ reserved_by: user.email }, "-created_date", 100);
+    },
     enabled: !!user?.email,
   });
 
-  if (!user) return null;
+  if (isLoadingAuth || !user) return null;
 
   const isLoading = loadingDonations || loadingReservations;
 

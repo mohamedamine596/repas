@@ -58,6 +58,14 @@ import Conversation from './pages/Conversation';
 import Profile from './pages/Profile';
 import MealHistory from './pages/MealHistory';
 import About from './pages/About';
+import Login from './pages/Login';
+import AdminVerifications from './pages/AdminVerifications';
+import OtpVerification from './pages/OtpVerification';
+import DonorDocumentUpload from './pages/DonorDocumentUpload';
+import DonorQuiz from './pages/DonorQuiz';
+import DonorPendingReview from './pages/DonorPendingReview';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import __Layout from './Layout.jsx';
 
 
@@ -73,6 +81,14 @@ export const PAGES = {
     "Profile": Profile,
     "MealHistory": MealHistory,
     "About": About,
+    "Login": Login,
+    "AdminVerifications": AdminVerifications,
+    "OtpVerification": OtpVerification,
+    "DonorDocumentUpload": DonorDocumentUpload,
+    "DonorQuiz": DonorQuiz,
+    "DonorPendingReview": DonorPendingReview,
+    "ForgotPassword": ForgotPassword,
+    "ResetPassword": ResetPassword,
 }
 
 export const pagesConfig = {

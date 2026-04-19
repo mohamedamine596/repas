@@ -1,0 +1,265 @@
+{
+  "info": {
+    "_postman_id": "a7321091-2d8d-4d87-b5df-99bb06f6f7b3",
+    "name": "Coeur Table Partage Backend",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:4000" },
+    { "key": "token", "value": "" },
+    { "key": "partnerEmail", "value": "amine2@test.com" },
+    { "key": "messageId", "value": "" },
+    { "key": "mealId", "value": "" },
+    { "key": "reportId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/health"
+      }
+    },
+    {
+      "name": "Auth - Register User 1",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"fullName\": \"Amine One\",\n  \"email\": \"amine1@test.com\",\n  \"password\": \"pass1234\"\n}"
+        },
+        "url": "{{baseUrl}}/api/auth/register"
+      }
+    },
+    {
+      "name": "Auth - Register User 2",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"fullName\": \"Amine Two\",\n  \"email\": \"amine2@test.com\",\n  \"password\": \"pass1234\"\n}"
+        },
+        "url": "{{baseUrl}}/api/auth/register"
+      }
+    },
+    {
+      "name": "Auth - Login User 1 (set token)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const json = pm.response.json();",
+              "if (json.token) pm.collectionVariables.set('token', json.token);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"amine1@test.com\",\n  \"password\": \"pass1234\"\n}"
+        },
+        "url": "{{baseUrl}}/api/auth/login"
+      }
+    },
+    {
+      "name": "Auth - Login User 2 (set token)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const json = pm.response.json();",
+              "if (json.token) pm.collectionVariables.set('token', json.token);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"amine2@test.com\",\n  \"password\": \"pass1234\"\n}"
+        },
+        "url": "{{baseUrl}}/api/auth/login"
+      }
+    },
+    {
+      "name": "Auth - Me",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "url": "{{baseUrl}}/api/auth/me"
+      }
+    },
+    {
+      "name": "Messages - Send",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"toEmail\": \"{{partnerEmail}}\",\n  \"content\": \"Hello from Postman\"\n}"
+        },
+        "url": "{{baseUrl}}/api/messages"
+      }
+    },
+    {
+      "name": "Messages - Conversations",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "url": "{{baseUrl}}/api/messages/conversations"
+      }
+    },
+    {
+      "name": "Messages - With Partner",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const json = pm.response.json();",
+              "const list = Array.isArray(json.messages) ? json.messages : [];",
+              "if (list.length > 0 && list[0].id) pm.collectionVariables.set('messageId', list[0].id);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "url": "{{baseUrl}}/api/messages/with/{{partnerEmail}}"
+      }
+    },
+    {
+      "name": "Messages - Mark Read",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "url": "{{baseUrl}}/api/messages/{{messageId}}/read"
+      }
+    },
+    {
+      "name": "Meals - Create (set mealId)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const json = pm.response.json();",
+              "if (json.meal && json.meal.id) pm.collectionVariables.set('mealId', json.meal.id);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Repas test Postman\",\n  \"food_type\": \"repas_complet\",\n  \"description\": \"Repas cree depuis Postman\",\n  \"quantity\": \"2 portions\",\n  \"available_date\": \"2026-04-12T12:00\",\n  \"delivery_option\": \"pickup\",\n  \"address\": \"Paris\",\n  \"latitude\": 48.8566,\n  \"longitude\": 2.3522\n}"
+        },
+        "url": "{{baseUrl}}/api/meals"
+      }
+    },
+    {
+      "name": "Meals - List Available",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/meals?status=available&sort=-created_date&limit=10"
+      }
+    },
+    {
+      "name": "Meals - Get By Id",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/meals/{{mealId}}"
+      }
+    },
+    {
+      "name": "Meals - Update Status",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"reserved\"\n}"
+        },
+        "url": "{{baseUrl}}/api/meals/{{mealId}}"
+      }
+    },
+    {
+      "name": "Reports - Create For Meal (set reportId)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const json = pm.response.json();",
+              "if (json.report && json.report.id) pm.collectionVariables.set('reportId', json.report.id);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"meal_id\": \"{{mealId}}\",\n  \"reason\": \"other\",\n  \"details\": \"Signalement test depuis Postman\"\n}"
+        },
+        "url": "{{baseUrl}}/api/reports"
+      }
+    },
+    {
+      "name": "Meals - Delete",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "url": "{{baseUrl}}/api/meals/{{mealId}}"
+      }
+    }
+  ]
+}

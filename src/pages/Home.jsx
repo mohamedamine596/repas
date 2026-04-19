@@ -1,22 +1,22 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { Heart, ArrowRight, MapPin, Users, Gift, Shield } from "lucide-react";
+import { useAuth } from "@/lib/AuthContext";
+import { ArrowRight, MapPin, Users, Gift, Shield } from "lucide-react";
 import { motion } from "framer-motion";
 import MealCard from "../components/meals/MealCard";
 import AppLogo from "../components/AppLogo";
+import { backendApi } from "@/api/backendClient";
 
 export default function Home() {
-  const [user, setUser] = useState(null);
+  const { user } = useAuth();
   const [recentMeals, setRecentMeals] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    base44.auth.me().then(setUser).catch(() => {});
-    base44.entities.Meal.filter({ status: "available" }, "-created_date", 6)
-      .then(setRecentMeals)
+    backendApi.meals.list({ status: "available" }, "-created_date", 6)
+      .then((data) => setRecentMeals(Array.isArray(data) ? data : []))
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
@@ -58,13 +58,13 @@ export default function Home() {
               <Button
                 variant="ghost"
                 className="text-[#1B5E3B] font-medium"
-                onClick={() => base44.auth.redirectToLogin()}
+                onClick={() => (window.location.href = createPageUrl("Login"))}
               >
                 Connexion
               </Button>
               <Button
                 className="bg-[#1B5E3B] hover:bg-[#154d30] text-white rounded-xl"
-                onClick={() => base44.auth.redirectToLogin()}
+                onClick={() => (window.location.href = createPageUrl("Login"))}
               >
                 S'inscrire
               </Button>
@@ -93,32 +93,18 @@ export default function Home() {
                 près de chez vous. Simple, gratuit et solidaire.
               </p>
               <div className="mt-8 flex flex-wrap gap-4">
-                {user ? (
-                  <>
-                    <Link to={createPageUrl("PublishMeal")}>
-                      <Button className="bg-[#E8634A] hover:bg-[#d4553e] text-white rounded-xl h-12 px-6 text-base">
-                        <Gift className="w-5 h-5 mr-2" />
-                        Donner un repas
-                      </Button>
-                    </Link>
-                    <Link to={createPageUrl("MealsList")}>
-                      <Button variant="outline" className="rounded-xl h-12 px-6 text-base border-[#1B5E3B]/20 text-[#1B5E3B] hover:bg-[#1B5E3B]/5">
-                        Voir les repas
-                        <ArrowRight className="w-4 h-4 ml-2" />
-                      </Button>
-                    </Link>
-                  </>
-                ) : (
-                  <>
-                    <Button
-                      className="bg-[#E8634A] hover:bg-[#d4553e] text-white rounded-xl h-12 px-6 text-base"
-                      onClick={() => base44.auth.redirectToLogin()}
-                    >
-                      Commencer maintenant
-                      <ArrowRight className="w-4 h-4 ml-2" />
-                    </Button>
-                  </>
-                )}
+                <Link to={createPageUrl("PublishMeal")}>
+                  <Button className="bg-[#E8634A] hover:bg-[#d4553e] text-white rounded-xl h-12 px-6 text-base">
+                    <Gift className="w-5 h-5 mr-2" />
+                    Donner un repas
+                  </Button>
+                </Link>
+                <Link to={createPageUrl("MealsList")}>
+                  <Button variant="outline" className="rounded-xl h-12 px-6 text-base border-[#1B5E3B]/20 text-[#1B5E3B] hover:bg-[#1B5E3B]/5">
+                    Voir les repas
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </Link>
               </div>
             </motion.div>
           </div>
@@ -191,7 +177,7 @@ export default function Home() {
             {!user && (
               <Button
                 className="mt-8 bg-[#E8634A] hover:bg-[#d4553e] text-white rounded-xl h-12 px-8 text-base"
-                onClick={() => base44.auth.redirectToLogin()}
+                onClick={() => (window.location.href = createPageUrl("Login"))}
               >
                 Rejoindre la communauté
               </Button>

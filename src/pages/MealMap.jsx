@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { backendApi } from "@/api/backendClient";
 import { useQuery } from "@tanstack/react-query";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Button } from "@/components/ui/button";
-import { Loader2, Navigation } from "lucide-react";
-import MealStatusBadge from "../components/meals/MealStatusBadge";
+import { Loader2 } from "lucide-react";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 
@@ -33,7 +32,9 @@ export default function MealMap() {
 
   const { data: meals = [], isLoading } = useQuery({
     queryKey: ["mapMeals"],
-    queryFn: () => base44.entities.Meal.filter({ status: "available" }, "-created_date", 200),
+    queryFn: async () => {
+      return backendApi.meals.list({ status: "available" }, "-created_date", 200);
+    },
   });
 
   useEffect(() => {

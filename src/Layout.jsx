@@ -2,10 +2,9 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { createPageUrl } from "@/utils";
-import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/lib/AuthContext";
 import {
-  Heart,
   Home,
   PlusCircle,
   List,
@@ -18,29 +17,35 @@ import {
   LogOut,
   LayoutDashboard,
   Info,
-  ChevronLeft
+  ChevronLeft,
+  ShieldCheck
 } from "lucide-react";
 import AppLogo from "./components/AppLogo";
 
 const NAV_ITEMS = [
   { name: "Accueil", page: "Home", icon: Home },
   { name: "Tableau de bord", page: "Dashboard", icon: LayoutDashboard },
-  { name: "Publier", page: "PublishMeal", icon: PlusCircle },
+  { name: "Publier", page: "PublishMeal", icon: PlusCircle, roles: ["DONOR"] },
   { name: "Repas", page: "MealsList", icon: List },
   { name: "Carte", page: "MealMap", icon: Map },
   { name: "Messages", page: "Messages", icon: MessageCircle },
   { name: "Historique", page: "MealHistory", icon: History },
+  { name: "Verifications", page: "AdminVerifications", icon: ShieldCheck, roles: ["ADMIN"] },
   { name: "À propos", page: "About", icon: Info },
 ];
 
+const PUBLIC_LAYOUT_PAGES = new Set([
+  "Home",
+  "Login",
+  "OtpVerification",
+  "ForgotPassword",
+  "ResetPassword",
+]);
+
 export default function Layout({ children, currentPageName }) {
-  const [user, setUser] = useState(null);
+  const { user, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    base44.auth.me().then(setUser).catch(() => setUser(null));
-  }, []);
 
   // Sync dark mode with system preference
   useEffect(() => {
@@ -55,11 +60,20 @@ export default function Layout({ children, currentPageName }) {
 
   const location = useLocation();
   const canGoBack = currentPageName !== "Home";
+  const visibleNavItems = NAV_ITEMS.filter(
+    (item) => !item.roles || item.roles.includes(user?.role)
+  );
+  const mobileBottomPreferred = user?.role === "ADMIN"
+    ? ["Home", "Dashboard", "AdminVerifications", "Messages", "About"]
+    : ["Home", "PublishMeal", "MealsList", "MealMap", "Messages"];
+  const mobileBottomItems = mobileBottomPreferred
+    .map((page) => visibleNavItems.find((item) => item.page === page))
+    .filter(Boolean);
 
-  const isPublicPage = currentPageName === "Home";
+  const isPublicPage = PUBLIC_LAYOUT_PAGES.has(currentPageName);
 
   const handleLogout = () => {
-    base44.auth.logout();
+    logout(true);
   };
 
   if (isPublicPage && !user) {
@@ -92,7 +106,7 @@ export default function Layout({ children, currentPageName }) {
 
           {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-1">
-            {NAV_ITEMS.map((item) => {
+            {visibleNavItems.map((item) => {
               const Icon = item.icon;
               const isActive = currentPageName === item.page;
               return (
@@ -121,7 +135,7 @@ export default function Layout({ children, currentPageName }) {
                 <div className="w-8 h-8 rounded-full bg-[#1B5E3B]/10 flex items-center justify-center">
                   <User className="w-4 h-4 text-[#1B5E3B]" />
                 </div>
-                <span className="font-medium">{user.full_name?.split(' ')[0]}</span>
+                <span className="font-medium">{(user.name || user.fullName)?.split(' ')[0]}</span>
               </Link>
             )}
             <Button
@@ -146,7 +160,7 @@ export default function Layout({ children, currentPageName }) {
         {/* Mobile menu */}
         {mobileMenuOpen && (
           <div className="md:hidden bg-white border-t border-[#f0e8df] px-4 py-4 space-y-1 animate-in slide-in-from-top-2">
-            {NAV_ITEMS.map((item) => {
+            {visibleNavItems.map((item) => {
               const Icon = item.icon;
               const isActive = currentPageName === item.page;
               return (
@@ -204,7 +218,7 @@ export default function Layout({ children, currentPageName }) {
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
         <div className="flex items-center justify-around py-2">
-          {[NAV_ITEMS[0], NAV_ITEMS[2], NAV_ITEMS[3], NAV_ITEMS[4], NAV_ITEMS[5]].map((item) => {
+          {mobileBottomItems.map((item) => {
             const Icon = item.icon;
             const isActive = currentPageName === item.page;
             return (

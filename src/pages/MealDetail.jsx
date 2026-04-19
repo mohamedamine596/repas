@@ -1,12 +1,10 @@
+// @ts-nocheck
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { createPageUrl } from "@/utils";
-import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger
 } from "@/components/ui/dialog";
@@ -19,6 +17,8 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { toast } from "sonner";
 import MealStatusBadge from "../components/meals/MealStatusBadge";
+import { useAuth } from "@/lib/AuthContext";
+import { backendApi } from "@/api/backendClient";
 
 const FOOD_LABELS = {
   repas_complet: "🍲 Repas complet",
@@ -36,49 +36,39 @@ export default function MealDetail() {
   const urlParams = new URLSearchParams(window.location.search);
   const mealId = urlParams.get("id");
 
-  const [user, setUser] = useState(null);
+  const { user, token, isLoadingAuth, navigateToLogin, isReceiver } = useAuth();
   const [message, setMessage] = useState("");
   const [reportReason, setReportReason] = useState("");
   const [reportDetails, setReportDetails] = useState("");
   const [reportOpen, setReportOpen] = useState(false);
 
   useEffect(() => {
-    base44.auth.me().then(setUser).catch(() => base44.auth.redirectToLogin());
-  }, []);
+    if (!isLoadingAuth && !user) {
+      navigateToLogin();
+    }
+  }, [isLoadingAuth, user, navigateToLogin]);
 
   const { data: meal, isLoading } = useQuery({
     queryKey: ["meal", mealId],
-    queryFn: async () => {
-      const meals = await base44.entities.Meal.filter({ id: mealId });
-      return meals[0];
-    },
+    queryFn: async () => backendApi.meals.getById(mealId),
     enabled: !!mealId,
   });
 
   const reserveMutation = useMutation({
     mutationFn: () =>
-      base44.entities.Meal.update(mealId, {
+      backendApi.meals.update(token, mealId, {
         status: "reserved",
         reserved_by: user.email,
-        reserved_by_name: user.full_name,
+        reserved_by_name: user.name || user.fullName,
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries(["meal", mealId]);
+      queryClient.invalidateQueries({ queryKey: ["meal", mealId] });
       toast.success("Repas réservé ! Contactez le donneur pour les détails.");
     },
   });
 
   const sendMessageMutation = useMutation({
-    mutationFn: () =>
-      base44.entities.Message.create({
-        sender_email: user.email,
-        sender_name: user.full_name,
-        receiver_email: meal.donor_email,
-        receiver_name: meal.donor_name,
-        content: message,
-        meal_id: mealId,
-        meal_title: meal.title,
-      }),
+    mutationFn: () => backendApi.messages.send(token, { toEmail: meal.donor_email, content: message }),
     onSuccess: () => {
       toast.success("Message envoyé !");
       setMessage("");
@@ -87,8 +77,7 @@ export default function MealDetail() {
 
   const reportMutation = useMutation({
     mutationFn: () =>
-      base44.entities.Report.create({
-        reporter_email: user.email,
+      backendApi.reports.create(token, {
         meal_id: mealId,
         reason: reportReason,
         details: reportDetails,
@@ -103,14 +92,14 @@ export default function MealDetail() {
 
   const updateStatusMutation = useMutation({
     mutationFn: (newStatus) =>
-      base44.entities.Meal.update(mealId, { status: newStatus }),
+      backendApi.meals.update(token, mealId, { status: newStatus }),
     onSuccess: () => {
-      queryClient.invalidateQueries(["meal", mealId]);
+      queryClient.invalidateQueries({ queryKey: ["meal", mealId] });
       toast.success("Statut mis à jour !");
     },
   });
 
-  if (isLoading || !user) {
+  if (isLoading || isLoadingAuth || !user) {
     return (
       <div className="flex justify-center py-20">
         <Loader2 className="w-8 h-8 animate-spin text-[#1B5E3B]" />
@@ -217,7 +206,7 @@ export default function MealDetail() {
       {/* Actions */}
       <div className="space-y-3">
         {/* Reserve button */}
-        {!isDonor && meal.status === "available" && (
+        {!isDonor && isReceiver && meal.status === "available" && (
           <Button
             className="w-full bg-[#1B5E3B] hover:bg-[#154d30] text-white rounded-xl h-12 text-base"
             onClick={() => reserveMutation.mutate()}

@@ -1,15 +1,17 @@
-import React, { useState, useEffect } from "react";
+// @ts-nocheck
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MapPin, Upload, Loader2, Camera } from "lucide-react";
+import { MapPin, Loader2, Camera } from "lucide-react";
 import { MobileSelect } from "../components/ui/MobileSelect";
 import { toast } from "sonner";
+import { useAuth } from "@/lib/AuthContext";
+import { backendApi } from "@/api/backendClient";
 
 const FOOD_TYPES = [
   { value: "repas_complet", label: "🍲 Repas complet" },
@@ -27,11 +29,15 @@ const DELIVERY_OPTIONS = [
   { value: "both", label: "Les deux possibles" },
 ];
 
+const MAX_PHOTO_SIZE_BYTES = 5 * 1024 * 1024;
+
 export default function PublishMeal() {
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
+  const { user, token, isLoadingAuth, navigateToLogin, isDonor, isVerifiedDonor } = useAuth();
   const [loading, setLoading] = useState(false);
   const [geoLoading, setGeoLoading] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
 
@@ -47,12 +53,27 @@ export default function PublishMeal() {
     longitude: null,
   });
 
-  useEffect(() => {
-    base44.auth.me().then(setUser).catch(() => base44.auth.redirectToLogin());
-  }, []);
-
   const handleChange = (field, value) => {
+    setSubmitError("");
+    setFieldErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
     setForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const validateForm = (payload) => {
+    const errors = {};
+    if (!payload.title) errors.title = "Le titre est obligatoire.";
+    if (!payload.food_type) errors.food_type = "Le type de nourriture est obligatoire.";
+    if (!payload.description) errors.description = "La description est obligatoire.";
+    if (!payload.quantity) errors.quantity = "La quantité est obligatoire.";
+    if (!payload.available_date) errors.available_date = "La disponibilité est obligatoire.";
+    if (!payload.delivery_option) errors.delivery_option = "Le mode de récupération est obligatoire.";
+    if (!payload.address) errors.address = "L'adresse est obligatoire.";
+    return errors;
   };
 
   const detectLocation = () => {
@@ -91,6 +112,11 @@ export default function PublishMeal() {
   const handlePhotoChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      if (file.size > MAX_PHOTO_SIZE_BYTES) {
+        toast.error("Image trop lourde (max 5 Mo). Choisissez une image plus légère.");
+        e.target.value = "";
+        return;
+      }
       setPhotoFile(file);
       setPhotoPreview(URL.createObjectURL(file));
     }
@@ -98,33 +124,142 @@ export default function PublishMeal() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.title || !form.food_type || !form.description || !form.quantity || !form.delivery_option || !form.address) {
+    setSubmitError("");
+
+    const payload = {
+      ...form,
+      title: form.title.trim(),
+      description: form.description.trim(),
+      quantity: form.quantity.trim(),
+      address: form.address.trim(),
+      available_date: form.available_date || null,
+    };
+
+    const errors = validateForm(payload);
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      setSubmitError("Veuillez corriger les champs en rouge puis réessayer.");
       toast.error("Veuillez remplir tous les champs obligatoires");
+      return;
+    }
+
+    if (!user) {
+      toast.error("Veuillez vous connecter pour publier un repas");
+      navigateToLogin();
+      return;
+    }
+
+    if (!isDonor) {
+      toast.error("Seuls les comptes donneurs peuvent publier un repas");
+      return;
+    }
+
+    if (!isVerifiedDonor) {
+      toast.error("Votre compte donneur doit etre verifie avant de publier");
       return;
     }
 
     setLoading(true);
 
-    let photo_url = "";
-    if (photoFile) {
-      const uploaded = await base44.integrations.Core.UploadFile({ file: photoFile });
-      photo_url = uploaded.file_url;
+    try {
+      let photo_url = "";
+      if (photoFile) {
+        photo_url = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(typeof reader.result === "string" ? reader.result : "");
+          reader.onerror = () => reject(new Error("Image read failed"));
+          reader.readAsDataURL(photoFile);
+        });
+      }
+
+      await backendApi.meals.create(token, {
+        ...payload,
+        photo_url,
+        status: "available"
+      });
+
+      setFieldErrors({});
+      setSubmitError("");
+      toast.success("Votre repas a été publié avec succès !");
+      navigate(createPageUrl("Dashboard"));
+    } catch (error) {
+      const status = error?.status;
+      const message = error?.data?.error || error?.message;
+
+      if (status === 401) {
+        setSubmitError("Session expirée. Veuillez vous reconnecter.");
+        toast.error("Votre session a expiré. Reconnectez-vous.");
+        navigateToLogin();
+      } else if (status === 403 && error?.data?.code === "DONOR_NOT_VERIFIED") {
+        setSubmitError("Votre verification donneur est en attente. Publication bloquee.");
+        toast.error("Votre compte donneur n'est pas encore verifie.");
+      } else if (status === 400 && message) {
+        setSubmitError(`Erreur de validation: ${message}`);
+        toast.error(`Validation refusée: ${message}`);
+      } else if (message === "Failed to fetch") {
+        setSubmitError("Le backend est inaccessible. Démarrez l'API sur le port 4000 puis réessayez.");
+        toast.error("Le serveur backend est inaccessible. Vérifiez qu'il tourne sur le port 4000.");
+      } else {
+        setSubmitError(message || "Impossible de publier le repas. Réessayez.");
+        toast.error(message || "Impossible de publier le repas. Réessayez.");
+      }
+    } finally {
+      setLoading(false);
     }
-
-    await base44.entities.Meal.create({
-      ...form,
-      photo_url,
-      status: "available",
-      donor_name: user.full_name,
-      donor_email: user.email,
-    });
-
-    toast.success("Votre repas a été publié avec succès !");
-    navigate(createPageUrl("Dashboard"));
-    setLoading(false);
   };
 
-  if (!user) return null;
+  if (isLoadingAuth) {
+    return (
+      <div className="flex justify-center py-20">
+        <Loader2 className="w-8 h-8 animate-spin text-[#1B5E3B]" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="max-w-xl mx-auto py-16 text-center space-y-4">
+        <h1 className="text-2xl font-bold text-gray-900">Connexion requise</h1>
+        <p className="text-gray-500">Vous devez vous connecter pour publier un repas.</p>
+        <Button
+          className="bg-[#1B5E3B] hover:bg-[#154d30] text-white rounded-xl"
+          onClick={() => navigateToLogin()}
+        >
+          Se connecter
+        </Button>
+      </div>
+    );
+  }
+
+  if (!isDonor) {
+    return (
+      <div className="max-w-xl mx-auto py-16 text-center space-y-4">
+        <h1 className="text-2xl font-bold text-gray-900">Acces reserve aux donneurs</h1>
+        <p className="text-gray-500">Votre compte est en mode receveur. Vous pouvez reserver des repas, pas en publier.</p>
+        <Button
+          className="bg-[#1B5E3B] hover:bg-[#154d30] text-white rounded-xl"
+          onClick={() => navigate(createPageUrl("MealsList"))}
+        >
+          Voir les repas disponibles
+        </Button>
+      </div>
+    );
+  }
+
+  if (!isVerifiedDonor) {
+    return (
+      <div className="max-w-xl mx-auto py-16 text-center space-y-4">
+        <h1 className="text-2xl font-bold text-gray-900">Verification donneur en attente</h1>
+        <p className="text-gray-500">Vous devez televerser un document d'identite puis attendre la validation admin pour publier des repas.</p>
+        <Button
+          className="bg-amber-600 hover:bg-amber-700 text-white rounded-xl"
+          onClick={() => navigate(createPageUrl("Profile"))}
+        >
+          Aller a mon profil pour verifier mon compte
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-2xl mx-auto pb-24 md:pb-8">
@@ -165,8 +300,9 @@ export default function PublishMeal() {
                 placeholder="Ex: Couscous fait maison"
                 value={form.title}
                 onChange={(e) => handleChange("title", e.target.value)}
-                className="mt-1"
+                className={`mt-1 ${fieldErrors.title ? "border-red-500 focus-visible:ring-red-500" : ""}`}
               />
+              {fieldErrors.title && <p className="text-xs text-red-600 mt-1">{fieldErrors.title}</p>}
             </div>
 
             <div>
@@ -176,8 +312,9 @@ export default function PublishMeal() {
                 onValueChange={(v) => handleChange("food_type", v)}
                 placeholder="Choisir un type"
                 options={FOOD_TYPES}
-                triggerClassName="mt-1"
+                triggerClassName={`mt-1 ${fieldErrors.food_type ? "border-red-500" : ""}`}
               />
+              {fieldErrors.food_type && <p className="text-xs text-red-600 mt-1">{fieldErrors.food_type}</p>}
             </div>
 
             <div>
@@ -187,8 +324,9 @@ export default function PublishMeal() {
                 placeholder="Décrivez le repas..."
                 value={form.description}
                 onChange={(e) => handleChange("description", e.target.value)}
-                className="mt-1 h-24"
+                className={`mt-1 h-24 ${fieldErrors.description ? "border-red-500 focus-visible:ring-red-500" : ""}`}
               />
+              {fieldErrors.description && <p className="text-xs text-red-600 mt-1">{fieldErrors.description}</p>}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -199,8 +337,9 @@ export default function PublishMeal() {
                   placeholder="Ex: 3 portions"
                   value={form.quantity}
                   onChange={(e) => handleChange("quantity", e.target.value)}
-                  className="mt-1"
+                  className={`mt-1 ${fieldErrors.quantity ? "border-red-500 focus-visible:ring-red-500" : ""}`}
                 />
+                {fieldErrors.quantity && <p className="text-xs text-red-600 mt-1">{fieldErrors.quantity}</p>}
               </div>
               <div>
                 <Label htmlFor="date">Disponibilité *</Label>
@@ -209,8 +348,9 @@ export default function PublishMeal() {
                   type="datetime-local"
                   value={form.available_date}
                   onChange={(e) => handleChange("available_date", e.target.value)}
-                  className="mt-1"
+                  className={`mt-1 ${fieldErrors.available_date ? "border-red-500 focus-visible:ring-red-500" : ""}`}
                 />
+                {fieldErrors.available_date && <p className="text-xs text-red-600 mt-1">{fieldErrors.available_date}</p>}
               </div>
             </div>
 
@@ -221,8 +361,9 @@ export default function PublishMeal() {
                 onValueChange={(v) => handleChange("delivery_option", v)}
                 placeholder="Choisir"
                 options={DELIVERY_OPTIONS}
-                triggerClassName="mt-1"
+                triggerClassName={`mt-1 ${fieldErrors.delivery_option ? "border-red-500" : ""}`}
               />
+              {fieldErrors.delivery_option && <p className="text-xs text-red-600 mt-1">{fieldErrors.delivery_option}</p>}
             </div>
           </CardContent>
         </Card>
@@ -240,8 +381,9 @@ export default function PublishMeal() {
                 placeholder="Votre adresse"
                 value={form.address}
                 onChange={(e) => handleChange("address", e.target.value)}
-                className="mt-1"
+                className={`mt-1 ${fieldErrors.address ? "border-red-500 focus-visible:ring-red-500" : ""}`}
               />
+              {fieldErrors.address && <p className="text-xs text-red-600 mt-1">{fieldErrors.address}</p>}
             </div>
             <Button
               type="button"
@@ -264,6 +406,12 @@ export default function PublishMeal() {
             )}
           </CardContent>
         </Card>
+
+        {submitError && (
+          <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+            {submitError}
+          </p>
+        )}
 
         <Button
           type="submit"

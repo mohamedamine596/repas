@@ -1,6 +1,7 @@
+// @ts-nocheck
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/lib/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,11 +10,31 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter
 } from "@/components/ui/dialog";
-import { User, Gift, Heart, MapPin, Loader2, Save, Trash2, AlertTriangle } from "lucide-react";
+import { User, Gift, Heart, MapPin, Loader2, Save, Trash2, AlertTriangle, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
+import { backendApi } from "@/api/backendClient";
+import { createPageUrl } from "@/utils";
+
+const ACCOUNT_STATUS_LABELS = {
+  email_pending: "Email a verifier",
+  email_verified: "Document + quiz requis",
+  quiz_passed: "Quiz valide",
+  pending_admin_review: "En verification admin",
+  active: "Compte actif",
+  suspended: "Suspendu",
+};
+
+const ACCOUNT_STATUS_STYLES = {
+  email_pending: "bg-amber-50 text-amber-800 border-amber-200",
+  email_verified: "bg-blue-50 text-blue-800 border-blue-200",
+  quiz_passed: "bg-emerald-50 text-emerald-800 border-emerald-200",
+  pending_admin_review: "bg-amber-50 text-amber-800 border-amber-200",
+  active: "bg-emerald-50 text-emerald-800 border-emerald-200",
+  suspended: "bg-red-50 text-red-800 border-red-200",
+};
 
 export default function Profile() {
-  const [user, setUser] = useState(null);
+  const { user, token, isLoadingAuth, navigateToLogin, logout, checkAppState } = useAuth();
   const [bio, setBio] = useState("");
   const [phone, setPhone] = useState("");
   const [saving, setSaving] = useState(false);
@@ -22,46 +43,69 @@ export default function Profile() {
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    base44.auth.me().then((u) => {
-      setUser(u);
-      setBio(u.bio || "");
-      setPhone(u.phone || "");
-    }).catch(() => base44.auth.redirectToLogin());
-  }, []);
+    if (!isLoadingAuth && !user) {
+      navigateToLogin();
+      return;
+    }
+    if (user) {
+      setBio(user.bio || "");
+      setPhone(user.phone || "");
+    }
+  }, [isLoadingAuth, user, navigateToLogin]);
 
   const { data: myMeals = [] } = useQuery({
     queryKey: ["profileMeals", user?.email],
-    queryFn: () => base44.entities.Meal.filter({ donor_email: user.email }),
+    queryFn: async () => {
+      return backendApi.meals.list({ donor_email: user.email }, "-created_date", 200);
+    },
     enabled: !!user?.email,
   });
 
   const { data: myReservations = [] } = useQuery({
     queryKey: ["profileReservations", user?.email],
-    queryFn: () => base44.entities.Meal.filter({ reserved_by: user.email }),
+    queryFn: async () => {
+      return backendApi.meals.list({ reserved_by: user.email }, "-created_date", 200);
+    },
     enabled: !!user?.email,
+  });
+
+  const {
+    data: verificationStatus,
+    isLoading: loadingVerification,
+  } = useQuery({
+    queryKey: ["verificationStatus", user?.id, token],
+    queryFn: async () => backendApi.verification.status(token),
+    enabled: !!user?.id && !!token && user?.role === "DONOR",
   });
 
   const handleSave = async () => {
     setSaving(true);
-    await base44.auth.updateMe({ bio, phone });
-    toast.success("Profil mis à jour !");
-    setSaving(false);
+    try {
+      await backendApi.auth.updateMe(token, { bio, phone });
+      await checkAppState();
+      toast.success("Profil mis à jour !");
+    } catch {
+      toast.error("Impossible de mettre a jour le profil");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleDeleteAccount = async () => {
     if (deleteConfirm !== "SUPPRIMER") return;
     setDeleting(true);
     // Delete all user's meals
-    const userMeals = await base44.entities.Meal.filter({ donor_email: user.email });
-    for (const meal of userMeals) {
-      await base44.entities.Meal.delete(meal.id);
+    const userMeals = await backendApi.meals.list({ donor_email: user.email }, "-created_date", 500);
+    const safeUserMeals = Array.isArray(userMeals) ? userMeals : [];
+    for (const meal of safeUserMeals) {
+      await backendApi.meals.remove(token, meal.id);
     }
     toast.success("Votre compte a été supprimé.");
     setDeleting(false);
-    base44.auth.logout();
+    logout(true);
   };
 
-  if (!user) return null;
+  if (isLoadingAuth || !user) return null;
 
   const donatedCount = myMeals.filter((m) => ["collected", "delivered"].includes(m.status)).length;
   const receivedCount = myReservations.filter((m) => ["collected", "delivered"].includes(m.status)).length;
@@ -81,8 +125,9 @@ export default function Profile() {
               <User className="w-8 h-8 text-[#1B5E3B]" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-gray-900">{user.full_name}</h2>
+              <h2 className="text-lg font-bold text-gray-900">{user.name || user.fullName}</h2>
               <p className="text-sm text-gray-500">{user.email}</p>
+              <p className="text-xs text-gray-500 mt-0.5">Role: {user.role}</p>
             </div>
           </div>
           <div className="grid grid-cols-3 gap-4 mt-6">
@@ -104,6 +149,73 @@ export default function Profile() {
           </div>
         </CardContent>
       </Card>
+
+      {user.role === "DONOR" && (
+        <Card className="border-[#f0e8df]">
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4" />
+              Verification donneur
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {loadingVerification ? (
+              <div className="flex items-center text-sm text-gray-500">
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Verification en cours de chargement...
+              </div>
+            ) : (
+              <>
+                <div className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ${ACCOUNT_STATUS_STYLES[verificationStatus?.accountStatus] || ACCOUNT_STATUS_STYLES.email_pending}`}>
+                  {ACCOUNT_STATUS_LABELS[verificationStatus?.accountStatus] || "En attente"}
+                </div>
+
+                {verificationStatus?.message ? (
+                  <p className="text-sm text-gray-700 bg-gray-50 border border-gray-200 rounded-md px-3 py-2">
+                    {verificationStatus.message}
+                  </p>
+                ) : null}
+
+                {verificationStatus?.latestRequest?.rejectionReason ? (
+                  <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-md px-3 py-2">
+                    Motif du refus: {verificationStatus.latestRequest.rejectionReason}
+                  </p>
+                ) : null}
+
+                {verificationStatus?.accountStatus === "suspended" && user?.suspensionReason ? (
+                  <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-md px-3 py-2">
+                    Raison de suspension: {user.suspensionReason}
+                  </p>
+                ) : null}
+
+                <div className="grid grid-cols-2 gap-3 text-xs">
+                  <div className="rounded-md border border-[#dbe5d5] bg-white px-3 py-2">
+                    <p className="text-gray-500">Tentatives quiz</p>
+                    <p className="font-semibold text-gray-900">
+                      {Number(user?.donorQuiz?.attempts || 0)}/{Number(user?.donorQuiz?.maxAttempts || 2)}
+                    </p>
+                  </div>
+                  <div className="rounded-md border border-[#dbe5d5] bg-white px-3 py-2">
+                    <p className="text-gray-500">Dernier score</p>
+                    <p className="font-semibold text-gray-900">
+                      {user?.donorQuiz?.lastScore ?? "-"}
+                    </p>
+                  </div>
+                </div>
+
+                {verificationStatus?.accountStatus === "email_verified" ? (
+                  <Button
+                    className="bg-[#1B5E3B] hover:bg-[#154d30] text-white rounded-xl"
+                    onClick={() => window.location.assign(createPageUrl("DonorDocumentUpload"))}
+                  >
+                    Continuer la verification
+                  </Button>
+                ) : null}
+              </>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Edit */}
       <Card className="border-[#f0e8df]">

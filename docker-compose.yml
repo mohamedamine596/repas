@@ -1,0 +1,20 @@
+services:
+  backend:
+    build:
+      context: ./backend
+    container_name: coeur-table-partage-backend
+    ports:
+      - "4000:4000"
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      args:
+        VITE_BASE44_APP_BASE_URL: http://backend:4000/api/
+    container_name: coeur-table-partage-frontend
+    depends_on:
+      - backend
+    ports:
+      - "8081:80"
+    restart: unless-stopped

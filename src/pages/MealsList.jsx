@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { backendApi } from "@/api/backendClient";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -50,7 +50,9 @@ export default function MealsList() {
 
   const { data: meals = [], isLoading } = useQuery({
     queryKey: ["availableMeals"],
-    queryFn: () => base44.entities.Meal.filter({ status: "available" }, "-created_date", 100),
+    queryFn: async () => {
+      return backendApi.meals.list({ status: "available" }, "-created_date", 100);
+    },
   });
 
   const handleRefresh = async () => {

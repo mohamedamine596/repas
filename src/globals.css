@@ -79,6 +79,24 @@
   border-radius: 0.75rem;
 }
 
+.auth-field {
+  color: #000000 !important;
+  -webkit-text-fill-color: #000000 !important;
+}
+
+.auth-field::placeholder {
+  color: #97a1ad !important;
+  -webkit-text-fill-color: #97a1ad !important;
+}
+
+.auth-field:-webkit-autofill,
+.auth-field:-webkit-autofill:hover,
+.auth-field:-webkit-autofill:focus {
+  -webkit-text-fill-color: #000000 !important;
+  box-shadow: 0 0 0 1000px #f3f3f1 inset;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
 /* Smooth scrolling */
 html {
   scroll-behavior: smooth;
