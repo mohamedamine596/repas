@@ -7,7 +7,7 @@ RUN npm ci --omit=dev
 
 COPY src ./src
 COPY data ./data
-COPY .env ./.env
+RUN mkdir -p uploads/verifications
 
 EXPOSE 4000
 

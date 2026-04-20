@@ -18,12 +18,33 @@ const configuredOrigins = String(process.env.CORS_ORIGIN || "")
   .split(",")
   .map((item) => item.trim())
   .filter(Boolean);
-const defaultAllowedOrigins = ["http://localhost:8080", "http://localhost:8081", "http://localhost:5173"];
-const allowedOrigins = [...new Set([...configuredOrigins, ...defaultAllowedOrigins])];
+const defaultAllowedOrigins = process.env.NODE_ENV === "production"
+  ? []
+  : ["http://localhost:8080", "http://localhost:8081", "http://localhost:5173"];
+const exactAllowedOrigins = new Set(
+  [...configuredOrigins, ...defaultAllowedOrigins].filter((item) => !item.includes("*"))
+);
+const wildcardAllowedOrigins = configuredOrigins
+  .filter((item) => item.includes("*"))
+  .map((pattern) =>
+    new RegExp(
+      `^${pattern
+        .replace(/[.+?^${}()|[\]\\]/g, "\\$&")
+        .replace(/\*/g, ".*")}$`
+    )
+  );
+
+function isAllowedOrigin(origin) {
+  if (exactAllowedOrigins.has(origin)) {
+    return true;
+  }
+
+  return wildcardAllowedOrigins.some((matcher) => matcher.test(origin));
+}
 
 app.use(cors({
   origin(origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (!origin || isAllowedOrigin(origin)) {
       callback(null, true);
       return;
     }

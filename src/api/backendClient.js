@@ -1,5 +1,17 @@
 // @ts-nocheck
-const API_BASE_URL = import.meta.env.VITE_BACKEND_API_URL || "http://localhost:4000/api";
+function normalizeApiBaseUrl(value) {
+  const raw = String(value || "").trim();
+  if (!raw) {
+    return "http://localhost:4000/api";
+  }
+
+  const clean = raw.replace(/\/+$/, "");
+  return /\/api$/i.test(clean) ? clean : `${clean}/api`;
+}
+
+const API_BASE_URL = normalizeApiBaseUrl(
+  import.meta.env.VITE_BACKEND_API_URL || import.meta.env.VITE_BASE44_APP_BASE_URL
+);
 let accessTokenCache = null;
 
 export function setAccessToken(token) {

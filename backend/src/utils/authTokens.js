@@ -86,15 +86,29 @@ export function issueTokenPair(user) {
   };
 }
 
+function normalizeSameSite(value) {
+  const normalized = String(value || "").toLowerCase();
+  if (["lax", "strict", "none"].includes(normalized)) {
+    return normalized;
+  }
+  return null;
+}
+
 export function getRefreshCookieOptions() {
   const maxAgeMs = Number(process.env.REFRESH_COOKIE_MAX_AGE_MS || 1000 * 60 * 60 * 24 * 7);
+  const isProduction = process.env.NODE_ENV === "production";
+  const configuredSameSite = normalizeSameSite(process.env.REFRESH_COOKIE_SAME_SITE);
+  const sameSite = configuredSameSite || (isProduction ? "none" : "lax");
+  const secure = process.env.REFRESH_COOKIE_SECURE === "true" || isProduction || sameSite === "none";
+  const cookieDomain = String(process.env.REFRESH_COOKIE_DOMAIN || "").trim();
 
   return {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    secure,
+    sameSite,
     path: "/api/auth",
     maxAge: maxAgeMs,
+    ...(cookieDomain ? { domain: cookieDomain } : {}),
   };
 }
 

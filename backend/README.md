@@ -21,15 +21,25 @@ Server URL: `http://localhost:4000`
 
 ```env
 PORT=4000
-CORS_ORIGIN=http://localhost:8080,http://localhost:8081
+NODE_ENV=production
+CORS_ORIGIN=https://your-frontend.vercel.app,https://*.vercel.app
 
 # Token secrets
 ACCESS_TOKEN_SECRET=replace_with_long_random_secret
 REFRESH_TOKEN_SECRET=replace_with_long_random_secret
 
+# Cookie settings for cross-site frontend/backend deployments
+REFRESH_COOKIE_SAME_SITE=none
+REFRESH_COOKIE_SECURE=true
+REFRESH_COOKIE_DOMAIN=
+
 # Optional TTL overrides
 ACCESS_TOKEN_TTL=15m
 REFRESH_TOKEN_TTL=30d
+
+# Frontend URL used in password reset links
+FRONTEND_APP_URL=https://your-frontend.vercel.app
+APP_URL=https://your-frontend.vercel.app
 
 # Base admin account (auto-created if missing)
 BASE_ADMIN_EMAIL=admin@coeurtablepartage.com
@@ -44,6 +54,11 @@ SMTP_PASS=
 SMTP_FROM=
 APP_NAME=Coeur Table Partage
 ```
+
+Render note:
+
+- If you deploy from a Docker image, configure all environment variables in Render dashboard.
+- Do not rely on a baked `.env` file inside the image.
 
 ## 3) Roles and verification rules
 

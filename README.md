@@ -19,11 +19,14 @@ Any change pushed to the repo will also be reflected in the Base44 Builder.
 
 ```
 VITE_BASE44_APP_ID=your_app_id
-VITE_BASE44_APP_BASE_URL=your_backend_url
+VITE_BACKEND_API_URL=http://localhost:4000/api
+
+# Optional fallback if VITE_BACKEND_API_URL is not set
+VITE_BASE44_APP_BASE_URL=http://localhost:4000
 
 e.g.
 VITE_BASE44_APP_ID=cbef744a8545c389ef439ea6
-VITE_BASE44_APP_BASE_URL=https://my-to-do-list-81bfaad7.base44.app
+VITE_BACKEND_API_URL=https://your-backend.onrender.com/api
 ```
 
 Run the app: `npm run dev`
@@ -54,6 +57,20 @@ Notes:
 
 - Vite environment variables are embedded at build time, so changing them requires rebuilding the image.
 - SPA routing is supported through the included Nginx fallback to `index.html`.
+
+## Deploy Frontend on Vercel + Backend on Render
+
+Frontend (Vercel):
+
+- Set `VITE_BACKEND_API_URL=https://your-backend.onrender.com/api`
+- Keep `vercel.json` in the project root so SPA routes resolve to `index.html`
+
+Backend (Render):
+
+- Set `CORS_ORIGIN=https://your-frontend.vercel.app,https://*.vercel.app`
+- Set `NODE_ENV=production`
+- Set `ACCESS_TOKEN_SECRET` and `REFRESH_TOKEN_SECRET`
+- For cross-site auth cookies, set `REFRESH_COOKIE_SAME_SITE=none` and `REFRESH_COOKIE_SECURE=true`
 
 **Publish your changes**
 
