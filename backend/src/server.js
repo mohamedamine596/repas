@@ -18,9 +18,10 @@ const configuredOrigins = String(process.env.CORS_ORIGIN || "")
   .split(",")
   .map((item) => item.trim())
   .filter(Boolean);
+const vercelFrontendOrigin = "https://repas-uayr.vercel.app";
 const defaultAllowedOrigins = process.env.NODE_ENV === "production"
-  ? []
-  : ["http://localhost:8080", "http://localhost:8081", "http://localhost:5173"];
+  ? [vercelFrontendOrigin]
+  : ["http://localhost:8080", "http://localhost:8081", "http://localhost:5173", vercelFrontendOrigin];
 const exactAllowedOrigins = new Set(
   [...configuredOrigins, ...defaultAllowedOrigins].filter((item) => !item.includes("*"))
 );

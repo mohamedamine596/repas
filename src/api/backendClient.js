@@ -10,7 +10,9 @@ function normalizeApiBaseUrl(value) {
 }
 
 const API_BASE_URL = normalizeApiBaseUrl(
-  import.meta.env.VITE_BACKEND_API_URL || import.meta.env.VITE_BASE44_APP_BASE_URL
+  import.meta.env.VITE_API_URL ||
+  import.meta.env.VITE_BACKEND_API_URL ||
+  import.meta.env.VITE_BASE44_APP_BASE_URL
 );
 let accessTokenCache = null;
 

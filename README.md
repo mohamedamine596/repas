@@ -19,14 +19,15 @@ Any change pushed to the repo will also be reflected in the Base44 Builder.
 
 ```
 VITE_BASE44_APP_ID=your_app_id
-VITE_BACKEND_API_URL=http://localhost:4000/api
+VITE_API_URL=http://localhost:4000/api
 
-# Optional fallback if VITE_BACKEND_API_URL is not set
+# Optional fallbacks if VITE_API_URL is not set
+VITE_BACKEND_API_URL=http://localhost:4000/api
 VITE_BASE44_APP_BASE_URL=http://localhost:4000
 
 e.g.
 VITE_BASE44_APP_ID=cbef744a8545c389ef439ea6
-VITE_BACKEND_API_URL=https://your-backend.onrender.com/api
+VITE_API_URL=https://your-backend.onrender.com/api
 ```
 
 Run the app: `npm run dev`
@@ -62,7 +63,7 @@ Notes:
 
 Frontend (Vercel):
 
-- Set `VITE_BACKEND_API_URL=https://your-backend.onrender.com/api`
+- Set `VITE_API_URL=https://your-backend.onrender.com/api`
 - Keep `vercel.json` in the project root so SPA routes resolve to `index.html`
 
 Backend (Render):
