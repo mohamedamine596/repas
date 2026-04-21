@@ -250,6 +250,17 @@ export const backendApi = {
       const params = new URLSearchParams({ status });
       return request(`/admin/verifications?${params.toString()}`, { token });
     },
+    listUsers: (token, filters = {}) => {
+      const params = new URLSearchParams();
+      if (filters.role && filters.role !== "ALL") {
+        params.set("role", filters.role);
+      }
+      if (filters.accountStatus && filters.accountStatus !== "ALL") {
+        params.set("accountStatus", filters.accountStatus);
+      }
+      const query = params.toString();
+      return request(`/admin/users${query ? `?${query}` : ""}`, { token });
+    },
     reviewVerification: (token, id, payload) =>
       request(`/admin/verifications/${encodeURIComponent(id)}`, {
         method: "PUT",

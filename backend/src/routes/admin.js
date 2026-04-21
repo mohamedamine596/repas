@@ -24,6 +24,16 @@ const listSchema = Joi.object({
   ).default(VERIFICATION_STATUS.PENDING),
 });
 
+const listUsersSchema = Joi.object({
+  role: Joi.string().valid(
+    USER_ROLES.ADMIN,
+    USER_ROLES.DONOR,
+    USER_ROLES.RECEIVER,
+    "ALL"
+  ).default("ALL"),
+  accountStatus: Joi.string().trim().max(80).default("ALL"),
+});
+
 const reviewSchema = Joi.object({
   status: Joi.string().valid(VERIFICATION_STATUS.APPROVED, VERIFICATION_STATUS.REJECTED).required(),
   reason: Joi.string().trim().allow("").max(500).default(""),
@@ -117,6 +127,34 @@ router.get(
       });
 
     return res.json({ verifications: result });
+  }
+);
+
+router.get(
+  "/users",
+  requireAuth,
+  requireRole(USER_ROLES.ADMIN),
+  validate(listUsersSchema, "query"),
+  (req, res) => {
+    const db = readDb();
+    const role = req.query.role || "ALL";
+    const accountStatus = req.query.accountStatus || "ALL";
+
+    let users = db.users;
+    if (role !== "ALL") {
+      users = users.filter((item) => item.role === role);
+    }
+
+    if (accountStatus !== "ALL") {
+      users = users.filter((item) => item.accountStatus === accountStatus);
+    }
+
+    const result = users
+      .slice()
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      .map((item) => publicUser(item));
+
+    return res.json({ users: result });
   }
 );
 

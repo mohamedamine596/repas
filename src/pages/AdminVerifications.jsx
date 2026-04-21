@@ -15,12 +15,33 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 const STATUS_OPTIONS = ["PENDING", "APPROVED", "REJECTED", "ALL"];
+const USER_ROLE_OPTIONS = ["ALL", "DONOR", "RECEIVER", "ADMIN"];
+
+function formatDate(value) {
+  if (!value) return "-";
+  return new Date(value).toLocaleString("fr-FR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
 
 export default function AdminVerifications() {
   const { isAdmin, token } = useAuth();
   const [statusFilter, setStatusFilter] = useState("PENDING");
+  const [userRoleFilter, setUserRoleFilter] = useState("ALL");
   const [reasons, setReasons] = useState({});
   const [loadingDocumentId, setLoadingDocumentId] = useState("");
   const [viewerOpen, setViewerOpen] = useState(false);
@@ -56,6 +77,19 @@ export default function AdminVerifications() {
     enabled: isAdmin && !!token,
   });
 
+  const {
+    data: users = [],
+    isLoading: isLoadingUsers,
+    refetch: refetchUsers,
+  } = useQuery({
+    queryKey: ["adminUsers", token, userRoleFilter],
+    queryFn: async () => {
+      const data = await backendApi.admin.listUsers(token, { role: userRoleFilter });
+      return Array.isArray(data?.users) ? data.users : [];
+    },
+    enabled: isAdmin && !!token,
+  });
+
   const reviewMutation = useMutation({
     mutationFn: async ({ id, status, reason }) =>
       backendApi.admin.reviewVerification(token, id, { status, reason }),
@@ -66,6 +100,7 @@ export default function AdminVerifications() {
           : "Demande rejetee"
       );
       refetch();
+      refetchUsers();
     },
     onError: (error) => {
       toast.error(error?.message || "Action admin impossible");
@@ -345,6 +380,62 @@ export default function AdminVerifications() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <Card className="border-[#f0e8df]">
+        <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <CardTitle className="text-base">Tous les utilisateurs</CardTitle>
+            <p className="text-sm text-gray-500">Liste complete des comptes de la plateforme.</p>
+          </div>
+          <select
+            value={userRoleFilter}
+            onChange={(e) => setUserRoleFilter(e.target.value)}
+            className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
+          >
+            {USER_ROLE_OPTIONS.map((role) => (
+              <option key={role} value={role}>
+                {role}
+              </option>
+            ))}
+          </select>
+        </CardHeader>
+        <CardContent>
+          {isLoadingUsers ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="w-6 h-6 animate-spin text-[#1B5E3B]" />
+            </div>
+          ) : users.length === 0 ? (
+            <p className="text-center text-gray-500 py-4">Aucun utilisateur pour ce filtre.</p>
+          ) : (
+            <div className="overflow-x-auto rounded-lg border border-[#eee7dc]">
+              <Table>
+                <TableHeader className="bg-[#fffaf2]">
+                  <TableRow>
+                    <TableHead>Nom</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead>Statut compte</TableHead>
+                    <TableHead>Verification</TableHead>
+                    <TableHead>Date creation</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {users.map((user) => (
+                    <TableRow key={user.id}>
+                      <TableCell className="font-medium text-[#1f2937]">{user.name || "-"}</TableCell>
+                      <TableCell>{user.email}</TableCell>
+                      <TableCell>{user.role}</TableCell>
+                      <TableCell>{user.accountStatus || "-"}</TableCell>
+                      <TableCell>{user.verificationStatus || "-"}</TableCell>
+                      <TableCell>{formatDate(user.createdAt)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

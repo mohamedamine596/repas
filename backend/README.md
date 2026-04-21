@@ -22,6 +22,8 @@ Server URL: `http://localhost:4000`
 ```env
 PORT=4000
 NODE_ENV=production
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/repas?retryWrites=true&w=majority
+MONGODB_DB_NAME=repas
 CORS_ORIGIN=https://your-frontend.vercel.app,https://*.vercel.app
 
 # Token secrets
@@ -53,6 +55,13 @@ SMTP_USER=
 SMTP_PASS=
 SMTP_FROM=
 APP_NAME=Coeur Table Partage
+```
+
+Test MongoDB connectivity:
+
+```bash
+cd backend
+npm run mongo:ping
 ```
 
 Render note:

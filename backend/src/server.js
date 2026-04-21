@@ -14,18 +14,20 @@ import adminRoutes from "./routes/admin.js";
 
 const app = express();
 const port = Number(process.env.PORT || 4000);
+const configuredTrustProxy = String(process.env.TRUST_PROXY || "").trim();
 const configuredOrigins = String(process.env.CORS_ORIGIN || "")
   .split(",")
   .map((item) => item.trim())
   .filter(Boolean);
-const vercelFrontendOrigin = "https://repas-uayr.vercel.app";
+const vercelFrontendOrigin = "https://repas-sable.vercel.app";
 const defaultAllowedOrigins = process.env.NODE_ENV === "production"
-  ? [vercelFrontendOrigin]
-  : ["http://localhost:8080", "http://localhost:8081", "http://localhost:5173", vercelFrontendOrigin];
+  ? [vercelFrontendOrigin, "https://*.vercel.app"]
+  : ["http://localhost:8080", "http://localhost:8081", "http://localhost:5173", vercelFrontendOrigin, "https://*.vercel.app"];
+const allAllowedOrigins = [...configuredOrigins, ...defaultAllowedOrigins];
 const exactAllowedOrigins = new Set(
-  [...configuredOrigins, ...defaultAllowedOrigins].filter((item) => !item.includes("*"))
+  allAllowedOrigins.filter((item) => !item.includes("*"))
 );
-const wildcardAllowedOrigins = configuredOrigins
+const wildcardAllowedOrigins = allAllowedOrigins
   .filter((item) => item.includes("*"))
   .map((pattern) =>
     new RegExp(
@@ -41,6 +43,22 @@ function isAllowedOrigin(origin) {
   }
 
   return wildcardAllowedOrigins.some((matcher) => matcher.test(origin));
+}
+
+if (configuredTrustProxy) {
+  const normalized = configuredTrustProxy.toLowerCase();
+  if (normalized === "true") {
+    app.set("trust proxy", 1);
+  } else if (normalized === "false") {
+    app.set("trust proxy", false);
+  } else if (!Number.isNaN(Number(normalized))) {
+    app.set("trust proxy", Number(normalized));
+  } else {
+    app.set("trust proxy", configuredTrustProxy);
+  }
+} else if (process.env.NODE_ENV === "production") {
+  // Render and similar platforms forward requests through a proxy.
+  app.set("trust proxy", 1);
 }
 
 app.use(cors({
