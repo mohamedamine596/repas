@@ -55,12 +55,7 @@ export default function MealDetail() {
   });
 
   const reserveMutation = useMutation({
-    mutationFn: () =>
-      backendApi.meals.update(token, mealId, {
-        status: "reserved",
-        reserved_by: user.email,
-        reserved_by_name: user.name || user.fullName,
-      }),
+    mutationFn: () => backendApi.meals.reserve(token, mealId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["meal", mealId] });
       toast.success("Repas réservé ! Contactez le donneur pour les détails.");

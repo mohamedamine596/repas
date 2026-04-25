@@ -1,32 +1,54 @@
 import React from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
-import AdminShell from "./components/AdminShell";
+import AdminShellNew from "./components/AdminShellNew";
 import { AdminProvider } from "./AdminContext";
-import AdminOverviewPage from "./pages/AdminOverviewPage";
-import AdminUsersPage from "./pages/AdminUsersPage";
-import AdminDonorsPage from "./pages/AdminDonorsPage";
-import AdminReceiversPage from "./pages/AdminReceiversPage";
-import AdminDonationsPage from "./pages/AdminDonationsPage";
-import AdminReportsPage from "./pages/AdminReportsPage";
-import AdminSettingsPage from "./pages/AdminSettingsPage";
+import AdminOverviewPageNew from "./pages/AdminOverviewPageNew";
+import AdminRestaurantsPage from "./pages/AdminRestaurantsPage";
+import AdminReceiversPageNew from "./pages/AdminReceiversPageNew";
+import AdminDonationsPageNew from "./pages/AdminDonationsPageNew";
+import AdminReportsPageNew from "./pages/AdminReportsPageNew";
+import AdminSettingsPageNew from "./pages/AdminSettingsPageNew";
 
 export default function AdminModule() {
   return (
     <AdminProvider>
       <Routes>
-        <Route element={<AdminShell />}>
-          <Route index element={<Navigate to="overview" replace />} />
-          <Route path="dashboard" element={<Navigate to="/admin/overview" replace />} />
-          <Route path="overview" element={<AdminOverviewPage />} />
-          <Route path="users" element={<AdminUsersPage />} />
-          <Route path="donors" element={<AdminDonorsPage />} />
-          <Route path="receivers" element={<AdminReceiversPage />} />
-          <Route path="donations" element={<AdminDonationsPage />} />
-          <Route path="reports" element={<AdminReportsPage />} />
-          <Route path="settings" element={<AdminSettingsPage />} />
-          <Route path="verifications" element={<Navigate to="/admin/donors?status=en_attente" replace />} />
+        <Route element={<AdminShellNew />}>
+          <Route index element={<AdminOverviewPageNew />} />
+          <Route path="overview" element={<AdminOverviewPageNew />} />
+          <Route path="dashboard" element={<Navigate to="/admin" replace />} />
+          <Route path="restaurants" element={<AdminRestaurantsPage />} />
+          <Route path="receveurs" element={<AdminReceiversPageNew />} />
+          <Route path="donations" element={<AdminDonationsPageNew />} />
+          <Route path="signalements" element={<AdminReportsPageNew />} />
+          <Route path="parametres" element={<AdminSettingsPageNew />} />
+          {/* Redirect old routes */}
+          <Route
+            path="users"
+            element={<Navigate to="/admin/restaurants" replace />}
+          />
+          <Route
+            path="donors"
+            element={<Navigate to="/admin/restaurants" replace />}
+          />
+          <Route
+            path="receivers"
+            element={<Navigate to="/admin/receveurs" replace />}
+          />
+          <Route
+            path="reports"
+            element={<Navigate to="/admin/signalements" replace />}
+          />
+          <Route
+            path="settings"
+            element={<Navigate to="/admin/parametres" replace />}
+          />
+          <Route
+            path="verifications"
+            element={<Navigate to="/admin/restaurants" replace />}
+          />
         </Route>
-        <Route path="*" element={<Navigate to="/admin/overview" replace />} />
+        <Route path="*" element={<Navigate to="/admin" replace />} />
       </Routes>
     </AdminProvider>
   );

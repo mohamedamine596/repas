@@ -59,7 +59,8 @@ export default function RegisterRestaurant() {
   const [errors, setErrors] = useState({});
 
   const handleChange = (field) => (e) => {
-    const value = e.target.type === "checkbox" ? e.target.checked : e.target.value;
+    const value =
+      e.target.type === "checkbox" ? e.target.checked : e.target.value;
     setForm((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: "" }));
   };
@@ -73,40 +74,106 @@ export default function RegisterRestaurant() {
 
     if (!validateSiren(siren)) {
       setSirenValid(false);
-      setErrors((prev) => ({ ...prev, siren: "Format SIREN invalide (9 chiffres requis)" }));
+      setErrors((prev) => ({
+        ...prev,
+        siren: "Format SIREN invalide (9 chiffres requis)",
+      }));
       return;
     }
 
-    // Optional: Call backend to verify SIREN via INSEE API
-    // For now, just validate format
-    setSirenValid(true);
-    setErrors((prev) => ({ ...prev, siren: "" }));
+    // Call INSEE API to verify SIREN and fetch business name
+    setSirenChecking(true);
+    setSirenApiDown(false);
+
+    try {
+      const response = await fetch(
+        `https://recherche-entreprises.api.gouv.fr/search?q=${encodeURIComponent(siren)}&page=1&per_page=5`,
+      );
+
+      if (!response.ok) {
+        throw new Error("API response error");
+      }
+
+      const data = await response.json();
+
+      // Check if we found results
+      if (data.results && data.results.length > 0) {
+        const entreprise = data.results[0];
+
+        // Check if the company is active
+        if (entreprise.etat_administratif !== "A") {
+          setSirenValid(false);
+          setErrors((prev) => ({
+            ...prev,
+            siren: "Cette entreprise est fermée",
+          }));
+          setSirenChecking(false);
+          return;
+        }
+
+        // Auto-fill business name from INSEE data
+        const businessName =
+          entreprise.nom_raison_sociale || entreprise.nom_complet || "";
+        if (businessName) {
+          setForm((prev) => ({ ...prev, businessName }));
+          toast.success(`Entreprise trouvée : ${businessName}`);
+        }
+
+        setSirenValid(true);
+        setErrors((prev) => ({ ...prev, siren: "" }));
+      } else {
+        // No results found
+        setSirenValid(false);
+        setErrors((prev) => ({
+          ...prev,
+          siren: "SIREN introuvable dans la base INSEE",
+        }));
+      }
+    } catch (error) {
+      console.error("Error fetching SIREN data:", error);
+      // API is down or network error - allow manual entry
+      setSirenApiDown(true);
+      setSirenValid(true); // Still mark as valid format-wise
+      toast.warning(
+        "API SIREN temporairement indisponible. Vous pouvez continuer avec la vérification manuelle.",
+      );
+    } finally {
+      setSirenChecking(false);
+    }
   };
 
   const validate = () => {
     const newErrors = {};
 
-    if (!form.businessName.trim()) newErrors.businessName = "Nom de la société requis";
-    if (!form.managerName.trim()) newErrors.managerName = "Nom du gérant requis";
+    if (!form.businessName.trim())
+      newErrors.businessName = "Nom de la société requis";
+    if (!form.managerName.trim())
+      newErrors.managerName = "Nom du gérant requis";
     if (!form.siren.trim()) newErrors.siren = "SIREN requis";
     else if (!validateSiren(form.siren)) newErrors.siren = "SIREN invalide";
 
     if (!form.email.trim()) newErrors.email = "Email requis";
-    else if (!/\S+@\S+\.\S+/.test(form.email)) newErrors.email = "Email invalide";
+    else if (!/\S+@\S+\.\S+/.test(form.email))
+      newErrors.email = "Email invalide";
 
     if (!form.phone.trim()) newErrors.phone = "Téléphone requis";
 
     if (!form.street.trim()) newErrors.street = "Adresse requise";
     if (!form.postalCode.trim()) newErrors.postalCode = "Code postal requis";
-    else if (!/^\d{5}$/.test(form.postalCode)) newErrors.postalCode = "Code postal invalide (5 chiffres)";
+    else if (!/^\d{5}$/.test(form.postalCode))
+      newErrors.postalCode = "Code postal invalide (5 chiffres)";
     if (!form.city.trim()) newErrors.city = "Ville requise";
 
     if (!form.password) newErrors.password = "Mot de passe requis";
-    else if (form.password.length < 10) newErrors.password = "Minimum 10 caractères";
+    else if (form.password.length < 10)
+      newErrors.password = "Minimum 10 caractères";
 
-    if (form.password !== form.confirmPassword) newErrors.confirmPassword = "Les mots de passe ne correspondent pas";
+    if (form.password !== form.confirmPassword)
+      newErrors.confirmPassword = "Les mots de passe ne correspondent pas";
 
-    if (!form.certifyFoodSafe) newErrors.certifyFoodSafe = "Vous devez certifier que les aliments sont propres à la consommation";
+    if (!form.certifyFoodSafe)
+      newErrors.certifyFoodSafe =
+        "Vous devez certifier que les aliments sont propres à la consommation";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -143,7 +210,8 @@ export default function RegisterRestaurant() {
     } catch (err) {
       console.error("Registration error:", err);
       const errorCode = err?.response?.data?.code;
-      const errorMsg = err?.response?.data?.error || "Erreur lors de l'inscription";
+      const errorMsg =
+        err?.response?.data?.error || "Erreur lors de l'inscription";
 
       if (errorCode === "SIREN_DUPLICATE") {
         setErrors({ siren: "Ce SIREN est déjà enregistré" });
@@ -153,7 +221,9 @@ export default function RegisterRestaurant() {
         toast.error("SIREN invalide ou entreprise fermée");
         if (err?.response?.data?.sirenApiDown) {
           setSirenApiDown(true);
-          toast.warning("API SIREN indisponible. Votre dossier sera vérifié par l'équipe.");
+          toast.warning(
+            "API SIREN indisponible. Votre dossier sera vérifié par l'équipe.",
+          );
         }
       } else {
         toast.error(errorMsg);
@@ -174,10 +244,15 @@ export default function RegisterRestaurant() {
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* Section Identité */}
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-gray-900">Identité de l'entreprise</h3>
-          
+          <h3 className="text-lg font-semibold text-gray-900">
+            Identité de l'entreprise
+          </h3>
+
           <div>
-            <Label htmlFor="businessName" className="text-sm font-medium text-[#1a3a0f]">
+            <Label
+              htmlFor="businessName"
+              className="text-sm font-medium text-[#1a3a0f]"
+            >
               Nom de la société *
             </Label>
             <Input
@@ -189,11 +264,16 @@ export default function RegisterRestaurant() {
               style={inputStyle}
               placeholder="Ex: Restaurant Le Gourmet"
             />
-            {errors.businessName && <p className="mt-1 text-sm text-red-600">{errors.businessName}</p>}
+            {errors.businessName && (
+              <p className="mt-1 text-sm text-red-600">{errors.businessName}</p>
+            )}
           </div>
 
           <div>
-            <Label htmlFor="managerName" className="text-sm font-medium text-[#1a3a0f]">
+            <Label
+              htmlFor="managerName"
+              className="text-sm font-medium text-[#1a3a0f]"
+            >
               Nom du gérant *
             </Label>
             <Input
@@ -205,11 +285,16 @@ export default function RegisterRestaurant() {
               style={inputStyle}
               placeholder="Prénom et nom"
             />
-            {errors.managerName && <p className="mt-1 text-sm text-red-600">{errors.managerName}</p>}
+            {errors.managerName && (
+              <p className="mt-1 text-sm text-red-600">{errors.managerName}</p>
+            )}
           </div>
 
           <div>
-            <Label htmlFor="siren" className="text-sm font-medium text-[#1a3a0f]">
+            <Label
+              htmlFor="siren"
+              className="text-sm font-medium text-[#1a3a0f]"
+            >
               Numéro SIREN * (9 chiffres)
             </Label>
             <div className="relative">
@@ -223,21 +308,41 @@ export default function RegisterRestaurant() {
                 className={inputClass}
                 style={inputStyle}
                 placeholder="123456789"
+                disabled={sirenChecking}
               />
-              {sirenValid === true && (
+              {sirenChecking && (
+                <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-[#2d6a1f] animate-spin" />
+              )}
+              {!sirenChecking && sirenValid === true && (
                 <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-green-600" />
               )}
-              {sirenValid === false && (
+              {!sirenChecking && sirenValid === false && (
                 <AlertCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-red-600" />
               )}
             </div>
-            {sirenValid === true && <p className="mt-1 text-sm text-green-600">✓ SIREN vérifié</p>}
-            {errors.siren && <p className="mt-1 text-sm text-red-600">{errors.siren}</p>}
-            {sirenApiDown && <p className="mt-1 text-sm text-orange-600">API SIREN indisponible - vérification manuelle</p>}
+            {sirenChecking && (
+              <p className="mt-1 text-sm text-blue-600">
+                🔍 Recherche de l'entreprise...
+              </p>
+            )}
+            {!sirenChecking && sirenValid === true && (
+              <p className="mt-1 text-sm text-green-600">✓ SIREN vérifié</p>
+            )}
+            {errors.siren && (
+              <p className="mt-1 text-sm text-red-600">{errors.siren}</p>
+            )}
+            {sirenApiDown && (
+              <p className="mt-1 text-sm text-orange-600">
+                API SIREN indisponible - vérification manuelle
+              </p>
+            )}
           </div>
 
           <div>
-            <Label htmlFor="email" className="text-sm font-medium text-[#1a3a0f]">
+            <Label
+              htmlFor="email"
+              className="text-sm font-medium text-[#1a3a0f]"
+            >
               Email professionnel *
             </Label>
             <Input
@@ -249,11 +354,16 @@ export default function RegisterRestaurant() {
               style={inputStyle}
               placeholder="contact@restaurant.fr"
             />
-            {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
+            {errors.email && (
+              <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+            )}
           </div>
 
           <div>
-            <Label htmlFor="phone" className="text-sm font-medium text-[#1a3a0f]">
+            <Label
+              htmlFor="phone"
+              className="text-sm font-medium text-[#1a3a0f]"
+            >
               Téléphone *
             </Label>
             <Input
@@ -265,16 +375,23 @@ export default function RegisterRestaurant() {
               style={inputStyle}
               placeholder="06 12 34 56 78"
             />
-            {errors.phone && <p className="mt-1 text-sm text-red-600">{errors.phone}</p>}
+            {errors.phone && (
+              <p className="mt-1 text-sm text-red-600">{errors.phone}</p>
+            )}
           </div>
         </div>
 
         {/* Section Adresse */}
         <div className="space-y-4 pt-4 border-t border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">Adresse du restaurant</h3>
-          
+          <h3 className="text-lg font-semibold text-gray-900">
+            Adresse du restaurant
+          </h3>
+
           <div>
-            <Label htmlFor="street" className="text-sm font-medium text-[#1a3a0f]">
+            <Label
+              htmlFor="street"
+              className="text-sm font-medium text-[#1a3a0f]"
+            >
               Rue *
             </Label>
             <Input
@@ -286,12 +403,17 @@ export default function RegisterRestaurant() {
               style={inputStyle}
               placeholder="12 Rue de la Paix"
             />
-            {errors.street && <p className="mt-1 text-sm text-red-600">{errors.street}</p>}
+            {errors.street && (
+              <p className="mt-1 text-sm text-red-600">{errors.street}</p>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="postalCode" className="text-sm font-medium text-[#1a3a0f]">
+              <Label
+                htmlFor="postalCode"
+                className="text-sm font-medium text-[#1a3a0f]"
+              >
                 Code postal *
               </Label>
               <Input
@@ -304,11 +426,16 @@ export default function RegisterRestaurant() {
                 style={inputStyle}
                 placeholder="75001"
               />
-              {errors.postalCode && <p className="mt-1 text-sm text-red-600">{errors.postalCode}</p>}
+              {errors.postalCode && (
+                <p className="mt-1 text-sm text-red-600">{errors.postalCode}</p>
+              )}
             </div>
 
             <div>
-              <Label htmlFor="city" className="text-sm font-medium text-[#1a3a0f]">
+              <Label
+                htmlFor="city"
+                className="text-sm font-medium text-[#1a3a0f]"
+              >
                 Ville *
               </Label>
               <Input
@@ -320,7 +447,9 @@ export default function RegisterRestaurant() {
                 style={inputStyle}
                 placeholder="Paris"
               />
-              {errors.city && <p className="mt-1 text-sm text-red-600">{errors.city}</p>}
+              {errors.city && (
+                <p className="mt-1 text-sm text-red-600">{errors.city}</p>
+              )}
             </div>
           </div>
         </div>
@@ -328,9 +457,12 @@ export default function RegisterRestaurant() {
         {/* Section Mot de passe */}
         <div className="space-y-4 pt-4 border-t border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900">Sécurité</h3>
-          
+
           <div>
-            <Label htmlFor="password" className="text-sm font-medium text-[#1a3a0f]">
+            <Label
+              htmlFor="password"
+              className="text-sm font-medium text-[#1a3a0f]"
+            >
               Mot de passe * (minimum 10 caractères)
             </Label>
             <Input
@@ -342,11 +474,16 @@ export default function RegisterRestaurant() {
               style={inputStyle}
               placeholder="••••••••••"
             />
-            {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password}</p>}
+            {errors.password && (
+              <p className="mt-1 text-sm text-red-600">{errors.password}</p>
+            )}
           </div>
 
           <div>
-            <Label htmlFor="confirmPassword" className="text-sm font-medium text-[#1a3a0f]">
+            <Label
+              htmlFor="confirmPassword"
+              className="text-sm font-medium text-[#1a3a0f]"
+            >
               Confirmer le mot de passe *
             </Label>
             <Input
@@ -358,7 +495,11 @@ export default function RegisterRestaurant() {
               style={inputStyle}
               placeholder="••••••••••"
             />
-            {errors.confirmPassword && <p className="mt-1 text-sm text-red-600">{errors.confirmPassword}</p>}
+            {errors.confirmPassword && (
+              <p className="mt-1 text-sm text-red-600">
+                {errors.confirmPassword}
+              </p>
+            )}
           </div>
         </div>
 
@@ -367,14 +508,22 @@ export default function RegisterRestaurant() {
           <Checkbox
             id="certifyFoodSafe"
             checked={form.certifyFoodSafe}
-            onCheckedChange={(checked) => setForm((prev) => ({ ...prev, certifyFoodSafe: checked }))}
+            onCheckedChange={(checked) =>
+              setForm((prev) => ({ ...prev, certifyFoodSafe: checked }))
+            }
             className="mt-1"
           />
-          <Label htmlFor="certifyFoodSafe" className="text-sm text-gray-700 cursor-pointer">
-            Je certifie que les aliments mis à disposition sont propres à la consommation et respectent les normes d'hygiène en vigueur.
+          <Label
+            htmlFor="certifyFoodSafe"
+            className="text-sm text-gray-700 cursor-pointer"
+          >
+            Je certifie que les aliments mis à disposition sont propres à la
+            consommation et respectent les normes d'hygiène en vigueur.
           </Label>
         </div>
-        {errors.certifyFoodSafe && <p className="text-sm text-red-600">{errors.certifyFoodSafe}</p>}
+        {errors.certifyFoodSafe && (
+          <p className="text-sm text-red-600">{errors.certifyFoodSafe}</p>
+        )}
 
         <Button
           type="submit"

@@ -33,7 +33,14 @@ const MAX_PHOTO_SIZE_BYTES = 5 * 1024 * 1024;
 
 export default function PublishMeal() {
   const navigate = useNavigate();
-  const { user, token, isLoadingAuth, navigateToLogin, isDonor, isVerifiedDonor } = useAuth();
+  const {
+    user,
+    token,
+    isLoadingAuth,
+    navigateToLogin,
+    isDonor,
+    isVerifiedDonor,
+  } = useAuth();
   const [loading, setLoading] = useState(false);
   const [geoLoading, setGeoLoading] = useState(false);
   const [submitError, setSubmitError] = useState("");
@@ -46,7 +53,8 @@ export default function PublishMeal() {
     food_type: "",
     description: "",
     quantity: "",
-    available_date: "",
+    prepared_at: "",
+    expires_at: "",
     delivery_option: "",
     address: "",
     latitude: null,
@@ -67,11 +75,26 @@ export default function PublishMeal() {
   const validateForm = (payload) => {
     const errors = {};
     if (!payload.title) errors.title = "Le titre est obligatoire.";
-    if (!payload.food_type) errors.food_type = "Le type de nourriture est obligatoire.";
-    if (!payload.description) errors.description = "La description est obligatoire.";
+    if (!payload.food_type)
+      errors.food_type = "Le type de nourriture est obligatoire.";
+    if (!payload.description)
+      errors.description = "La description est obligatoire.";
+    else if (payload.description.trim().length < 10)
+      errors.description = "La description doit contenir au moins 10 caractères.";
     if (!payload.quantity) errors.quantity = "La quantité est obligatoire.";
-    if (!payload.available_date) errors.available_date = "La disponibilité est obligatoire.";
-    if (!payload.delivery_option) errors.delivery_option = "Le mode de récupération est obligatoire.";
+    if (!payload.prepared_at)
+      errors.prepared_at = "L'heure de préparation est obligatoire.";
+    if (!payload.expires_at)
+      errors.expires_at = "La date d'expiration est obligatoire.";
+    else if (payload.prepared_at && payload.expires_at) {
+      const prepDate = new Date(payload.prepared_at);
+      const expDate = new Date(payload.expires_at);
+      if (expDate <= prepDate) {
+        errors.expires_at = "La date d'expiration doit être après la préparation.";
+      }
+    }
+    if (!payload.delivery_option)
+      errors.delivery_option = "Le mode de récupération est obligatoire.";
     if (!payload.address) errors.address = "L'adresse est obligatoire.";
     return errors;
   };
@@ -87,25 +110,25 @@ export default function PublishMeal() {
         const lat = pos.coords.latitude;
         const lng = pos.coords.longitude;
         setForm((prev) => ({ ...prev, latitude: lat, longitude: lng }));
-        
+
         // Reverse geocode
         try {
           const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`
+            `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
           );
           const data = await res.json();
           if (data.display_name) {
             setForm((prev) => ({ ...prev, address: data.display_name }));
           }
         } catch {}
-        
+
         setGeoLoading(false);
         toast.success("Position détectée !");
       },
       () => {
         setGeoLoading(false);
         toast.error("Impossible de détecter votre position");
-      }
+      },
     );
   };
 
@@ -113,7 +136,9 @@ export default function PublishMeal() {
     const file = e.target.files[0];
     if (file) {
       if (file.size > MAX_PHOTO_SIZE_BYTES) {
-        toast.error("Image trop lourde (max 5 Mo). Choisissez une image plus légère.");
+        toast.error(
+          "Image trop lourde (max 5 Mo). Choisissez une image plus légère.",
+        );
         e.target.value = "";
         return;
       }
@@ -126,14 +151,34 @@ export default function PublishMeal() {
     e.preventDefault();
     setSubmitError("");
 
+    // Check photo first
+    if (!photoFile) {
+      toast.error(
+        "Une photo du repas est obligatoire pour la sécurité alimentaire",
+      );
+      setSubmitError("Veuillez ajouter une photo de votre repas.");
+      return;
+    }
+
+    // Convert datetime-local to ISO string
+    const preparedISO = form.prepared_at 
+      ? new Date(form.prepared_at).toISOString() 
+      : new Date().toISOString();
+    const expiresISO = form.expires_at 
+      ? new Date(form.expires_at).toISOString() 
+      : "";
+
     const payload = {
       ...form,
       title: form.title.trim(),
       description: form.description.trim(),
       quantity: form.quantity.trim(),
       address: form.address.trim(),
-      available_date: form.available_date || null,
+      prepared_at: preparedISO,
+      expires_at: expiresISO,
     };
+
+    console.log("🍽️ Payload to send:", payload);
 
     const errors = validateForm(payload);
     if (Object.keys(errors).length > 0) {
@@ -166,7 +211,8 @@ export default function PublishMeal() {
       if (photoFile) {
         photo_url = await new Promise((resolve, reject) => {
           const reader = new FileReader();
-          reader.onload = () => resolve(typeof reader.result === "string" ? reader.result : "");
+          reader.onload = () =>
+            resolve(typeof reader.result === "string" ? reader.result : "");
           reader.onerror = () => reject(new Error("Image read failed"));
           reader.readAsDataURL(photoFile);
         });
@@ -175,14 +221,22 @@ export default function PublishMeal() {
       await backendApi.meals.create(token, {
         ...payload,
         photo_url,
-        status: "available"
+        status: "available",
       });
 
+      console.log("✅ Meal published successfully!");
       setFieldErrors({});
       setSubmitError("");
       toast.success("Votre repas a été publié avec succès !");
       navigate(createPageUrl("Dashboard"));
     } catch (error) {
+      console.error("❌ Error publishing meal:", error);
+      console.error("Error details:", {
+        status: error?.status,
+        data: error?.data,
+        message: error?.message
+      });
+      
       const status = error?.status;
       const message = error?.data?.error || error?.message;
 
@@ -191,14 +245,20 @@ export default function PublishMeal() {
         toast.error("Votre session a expiré. Reconnectez-vous.");
         navigateToLogin();
       } else if (status === 403 && error?.data?.code === "DONOR_NOT_VERIFIED") {
-        setSubmitError("Votre verification donneur est en attente. Publication bloquee.");
+        setSubmitError(
+          "Votre verification donneur est en attente. Publication bloquee.",
+        );
         toast.error("Votre compte donneur n'est pas encore verifie.");
       } else if (status === 400 && message) {
         setSubmitError(`Erreur de validation: ${message}`);
         toast.error(`Validation refusée: ${message}`);
       } else if (message === "Failed to fetch") {
-        setSubmitError("Le backend est inaccessible. Démarrez l'API sur le port 4000 puis réessayez.");
-        toast.error("Le serveur backend est inaccessible. Vérifiez qu'il tourne sur le port 4000.");
+        setSubmitError(
+          "Le backend est inaccessible. Démarrez l'API sur le port 4000 puis réessayez.",
+        );
+        toast.error(
+          "Le serveur backend est inaccessible. Vérifiez qu'il tourne sur le port 4000.",
+        );
       } else {
         setSubmitError(message || "Impossible de publier le repas. Réessayez.");
         toast.error(message || "Impossible de publier le repas. Réessayez.");
@@ -220,7 +280,9 @@ export default function PublishMeal() {
     return (
       <div className="max-w-xl mx-auto py-16 text-center space-y-4">
         <h1 className="text-2xl font-bold text-gray-900">Connexion requise</h1>
-        <p className="text-gray-500">Vous devez vous connecter pour publier un repas.</p>
+        <p className="text-gray-500">
+          Vous devez vous connecter pour publier un repas.
+        </p>
         <Button
           className="bg-[#1B5E3B] hover:bg-[#154d30] text-white rounded-xl"
           onClick={() => navigateToLogin()}
@@ -234,8 +296,13 @@ export default function PublishMeal() {
   if (!isDonor) {
     return (
       <div className="max-w-xl mx-auto py-16 text-center space-y-4">
-        <h1 className="text-2xl font-bold text-gray-900">Acces reserve aux donneurs</h1>
-        <p className="text-gray-500">Votre compte est en mode receveur. Vous pouvez reserver des repas, pas en publier.</p>
+        <h1 className="text-2xl font-bold text-gray-900">
+          Acces reserve aux donneurs
+        </h1>
+        <p className="text-gray-500">
+          Votre compte est en mode receveur. Vous pouvez reserver des repas, pas
+          en publier.
+        </p>
         <Button
           className="bg-[#1B5E3B] hover:bg-[#154d30] text-white rounded-xl"
           onClick={() => navigate(createPageUrl("MealsList"))}
@@ -249,8 +316,13 @@ export default function PublishMeal() {
   if (!isVerifiedDonor) {
     return (
       <div className="max-w-xl mx-auto py-16 text-center space-y-4">
-        <h1 className="text-2xl font-bold text-gray-900">Verification donneur en attente</h1>
-        <p className="text-gray-500">Vous devez televerser un document d'identite puis attendre la validation admin pour publier des repas.</p>
+        <h1 className="text-2xl font-bold text-gray-900">
+          Verification donneur en attente
+        </h1>
+        <p className="text-gray-500">
+          Vous devez televerser un document d'identite puis attendre la
+          validation admin pour publier des repas.
+        </p>
         <Button
           className="bg-amber-600 hover:bg-amber-700 text-white rounded-xl"
           onClick={() => navigate(createPageUrl("Profile"))}
@@ -265,24 +337,41 @@ export default function PublishMeal() {
     <div className="max-w-2xl mx-auto pb-24 md:pb-8">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">Publier un repas</h1>
-        <p className="text-gray-500 mt-1">Partagez de la nourriture avec ceux qui en ont besoin</p>
+        <p className="text-gray-500 mt-1">
+          Partagez de la nourriture avec ceux qui en ont besoin
+        </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Photo */}
         <Card className="border-[#f0e8df]">
           <CardContent className="p-6">
-            <Label className="text-sm font-medium text-gray-700 mb-3 block">Photo (optionnel)</Label>
+            <Label className="text-sm font-medium text-gray-700 mb-3 block">
+              Photo du repas *{" "}
+              <span className="text-xs text-gray-500">
+                (obligatoire pour la sécurité alimentaire)
+              </span>
+            </Label>
             <label className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-[#e0d8cf] rounded-xl cursor-pointer hover:border-[#1B5E3B]/30 transition-colors bg-[#faf5ef] overflow-hidden">
               {photoPreview ? (
-                <img src={photoPreview} alt="Aperçu" className="w-full h-full object-cover" />
+                <img
+                  src={photoPreview}
+                  alt="Aperçu"
+                  className="w-full h-full object-cover"
+                />
               ) : (
                 <div className="flex flex-col items-center text-gray-400">
                   <Camera className="w-8 h-8 mb-2" />
-                  <span className="text-sm">Ajouter une photo</span>
+                  <span className="text-sm">📸 Ajouter une photo</span>
+                  <span className="text-xs mt-1">Max 5 Mo</span>
                 </div>
               )}
-              <input type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handlePhotoChange}
+              />
             </label>
           </CardContent>
         </Card>
@@ -302,7 +391,9 @@ export default function PublishMeal() {
                 onChange={(e) => handleChange("title", e.target.value)}
                 className={`mt-1 ${fieldErrors.title ? "border-red-500 focus-visible:ring-red-500" : ""}`}
               />
-              {fieldErrors.title && <p className="text-xs text-red-600 mt-1">{fieldErrors.title}</p>}
+              {fieldErrors.title && (
+                <p className="text-xs text-red-600 mt-1">{fieldErrors.title}</p>
+              )}
             </div>
 
             <div>
@@ -314,19 +405,27 @@ export default function PublishMeal() {
                 options={FOOD_TYPES}
                 triggerClassName={`mt-1 ${fieldErrors.food_type ? "border-red-500" : ""}`}
               />
-              {fieldErrors.food_type && <p className="text-xs text-red-600 mt-1">{fieldErrors.food_type}</p>}
+              {fieldErrors.food_type && (
+                <p className="text-xs text-red-600 mt-1">
+                  {fieldErrors.food_type}
+                </p>
+              )}
             </div>
 
             <div>
-              <Label htmlFor="desc">Description *</Label>
+              <Label htmlFor="desc">Description * <span className="text-xs text-gray-500">(minimum 10 caractères)</span></Label>
               <Textarea
                 id="desc"
-                placeholder="Décrivez le repas..."
+                placeholder="Décrivez le repas en détail..."
                 value={form.description}
                 onChange={(e) => handleChange("description", e.target.value)}
                 className={`mt-1 h-24 ${fieldErrors.description ? "border-red-500 focus-visible:ring-red-500" : ""}`}
               />
-              {fieldErrors.description && <p className="text-xs text-red-600 mt-1">{fieldErrors.description}</p>}
+              {fieldErrors.description && (
+                <p className="text-xs text-red-600 mt-1">
+                  {fieldErrors.description}
+                </p>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -339,18 +438,55 @@ export default function PublishMeal() {
                   onChange={(e) => handleChange("quantity", e.target.value)}
                   className={`mt-1 ${fieldErrors.quantity ? "border-red-500 focus-visible:ring-red-500" : ""}`}
                 />
-                {fieldErrors.quantity && <p className="text-xs text-red-600 mt-1">{fieldErrors.quantity}</p>}
+                {fieldErrors.quantity && (
+                  <p className="text-xs text-red-600 mt-1">
+                    {fieldErrors.quantity}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Food Safety: Preparation and Expiration Times */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="prepared_at">Heure de préparation *</Label>
+                <Input
+                  id="prepared_at"
+                  type="datetime-local"
+                  value={form.prepared_at}
+                  onChange={(e) => handleChange("prepared_at", e.target.value)}
+                  className={`mt-1 ${fieldErrors.prepared_at ? "border-red-500 focus-visible:ring-red-500" : ""}`}
+                  max={new Date().toISOString().slice(0, 16)}
+                />
+                {fieldErrors.prepared_at && (
+                  <p className="text-xs text-red-600 mt-1">
+                    {fieldErrors.prepared_at}
+                  </p>
+                )}
+                <p className="text-xs text-gray-500 mt-1">
+                  📅 Quand avez-vous préparé ce repas ?
+                </p>
               </div>
               <div>
-                <Label htmlFor="date">Disponibilité *</Label>
+                <Label htmlFor="expires_at">Date d'expiration *</Label>
                 <Input
-                  id="date"
+                  id="expires_at"
                   type="datetime-local"
-                  value={form.available_date}
-                  onChange={(e) => handleChange("available_date", e.target.value)}
-                  className={`mt-1 ${fieldErrors.available_date ? "border-red-500 focus-visible:ring-red-500" : ""}`}
+                  value={form.expires_at}
+                  onChange={(e) => handleChange("expires_at", e.target.value)}
+                  className={`mt-1 ${fieldErrors.expires_at ? "border-red-500 focus-visible:ring-red-500" : ""}`}
+                  min={
+                    form.prepared_at || new Date().toISOString().slice(0, 16)
+                  }
                 />
-                {fieldErrors.available_date && <p className="text-xs text-red-600 mt-1">{fieldErrors.available_date}</p>}
+                {fieldErrors.expires_at && (
+                  <p className="text-xs text-red-600 mt-1">
+                    {fieldErrors.expires_at}
+                  </p>
+                )}
+                <p className="text-xs text-gray-500 mt-1">
+                  ⏰ Jusqu'à quand peut-on consommer ce repas ?
+                </p>
               </div>
             </div>
 
@@ -363,7 +499,11 @@ export default function PublishMeal() {
                 options={DELIVERY_OPTIONS}
                 triggerClassName={`mt-1 ${fieldErrors.delivery_option ? "border-red-500" : ""}`}
               />
-              {fieldErrors.delivery_option && <p className="text-xs text-red-600 mt-1">{fieldErrors.delivery_option}</p>}
+              {fieldErrors.delivery_option && (
+                <p className="text-xs text-red-600 mt-1">
+                  {fieldErrors.delivery_option}
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -383,7 +523,11 @@ export default function PublishMeal() {
                 onChange={(e) => handleChange("address", e.target.value)}
                 className={`mt-1 ${fieldErrors.address ? "border-red-500 focus-visible:ring-red-500" : ""}`}
               />
-              {fieldErrors.address && <p className="text-xs text-red-600 mt-1">{fieldErrors.address}</p>}
+              {fieldErrors.address && (
+                <p className="text-xs text-red-600 mt-1">
+                  {fieldErrors.address}
+                </p>
+              )}
             </div>
             <Button
               type="button"

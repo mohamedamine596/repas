@@ -306,6 +306,16 @@ export const backendApi = {
         token,
         body: payload,
       }).then((d) => d?.meal),
+    reserve: (token, id) =>
+      request(`/meals/${encodeURIComponent(id)}/reserve`, {
+        method: "PATCH",
+        token,
+      }).then((d) => d?.meal),
+    collect: (token, id) =>
+      request(`/meals/${encodeURIComponent(id)}/collect`, {
+        method: "PATCH",
+        token,
+      }).then((d) => d?.meal),
     remove: (token, id) =>
       request(`/meals/${encodeURIComponent(id)}`, { method: "DELETE", token }),
   },
