@@ -11,6 +11,7 @@ import mealRoutes from "./routes/meals.js";
 import reportRoutes from "./routes/reports.js";
 import verificationRoutes from "./routes/verification.js";
 import adminRoutes from "./routes/admin.js";
+import { connectDb } from "./config/mongoose.js";
 
 const app = express();
 const port = Number(process.env.PORT || 4000);
@@ -105,6 +106,8 @@ app.use("/api/reports", reportRoutes);
 app.use((req, res) => {
   res.status(404).json({ error: "Route not found" });
 });
+
+await connectDb();
 
 app.listen(port, () => {
   console.log(`Backend API listening on http://localhost:${port}`);

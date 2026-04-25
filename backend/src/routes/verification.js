@@ -104,7 +104,7 @@ router.post("/upload", requireAuth, requireRole(USER_ROLES.DONOR), async (req, r
     return res.status(400).json({ error: "document file is required" });
   }
 
-  const db = readDb();
+  const db = await readDb();
   const user = db.users.find((item) => item.id === req.user.id);
 
   if (!user) {
@@ -127,7 +127,7 @@ router.post("/upload", requireAuth, requireRole(USER_ROLES.DONOR), async (req, r
     const donorQuiz = ensureDonorQuizState(user);
     donorQuiz.document = uploadedDocument;
     user.updatedAt = now;
-    writeDb(db);
+    await writeDb(db);
 
     return res.status(201).json({
       staged: true,
@@ -207,7 +207,7 @@ router.post("/upload", requireAuth, requireRole(USER_ROLES.DONOR), async (req, r
   if (!pendingPlaceholder) {
     db.verificationRequests.push(request);
   }
-  writeDb(db);
+  await writeDb(db);
 
   return res.status(201).json({
     verificationRequest: publicRequest(request),
@@ -220,8 +220,8 @@ router.post("/upload", requireAuth, requireRole(USER_ROLES.DONOR), async (req, r
   });
 });
 
-router.get("/status", requireAuth, (req, res) => {
-  const db = readDb();
+router.get("/status", requireAuth, async (req, res) => {
+  const db = await readDb();
   const user = db.users.find((item) => item.id === req.user.id);
 
   if (!user) {

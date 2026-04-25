@@ -1,47 +1,22 @@
 import "dotenv/config";
-import { MongoClient, ServerApiVersion } from "mongodb";
-
-const uri = process.env.MONGODB_URI;
-
-if (!uri) {
-  throw new Error("MONGODB_URI is missing. Set it in your environment variables.");
-}
-
-const client = new MongoClient(uri, {
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-  },
-});
-
-let isConnected = false;
+import mongoose from "mongoose";
+import { connectDb, disconnectDb } from "../config/mongoose.js";
 
 export async function connectMongo() {
-  if (!isConnected) {
-    await client.connect();
-    isConnected = true;
-  }
-
-  return client;
+  await connectDb();
+  return mongoose.connection;
 }
 
 export async function getMongoDb() {
-  const mongoClient = await connectMongo();
-  const dbName = process.env.MONGODB_DB_NAME || "repas";
-  return mongoClient.db(dbName);
+  const connection = await connectMongo();
+  return connection.db;
 }
 
 export async function pingMongo() {
-  const mongoClient = await connectMongo();
-  await mongoClient.db("admin").command({ ping: 1 });
+  const db = await getMongoDb();
+  await db.command({ ping: 1 });
 }
 
 export async function closeMongo() {
-  if (!isConnected) {
-    return;
-  }
-
-  await client.close();
-  isConnected = false;
+  await disconnectDb();
 }

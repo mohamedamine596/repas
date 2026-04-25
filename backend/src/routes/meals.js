@@ -3,7 +3,7 @@ import Joi from "joi";
 import { nanoid } from "nanoid";
 import { requireAuth, requireVerifiedDonor } from "../middleware/auth.js";
 import { validate } from "../middleware/validate.js";
-import { readDb, writeDb } from "../utils/db.js";
+import { deleteMealById, readDb, writeDb } from "../utils/db.js";
 import { USER_ROLES } from "../constants/auth.js";
 
 const router = express.Router();
@@ -31,8 +31,8 @@ function applyFilters(items, filters) {
   );
 }
 
-router.get("/", (req, res) => {
-  const db = readDb();
+router.get("/", async (req, res) => {
+  const db = await readDb();
   const { sort = "-created_date", limit = "100", ...filters } = req.query;
 
   let meals = applyFilters(db.meals, filters);
@@ -55,8 +55,8 @@ router.get("/", (req, res) => {
   return res.json({ meals });
 });
 
-router.get("/:id", (req, res) => {
-  const db = readDb();
+router.get("/:id", async (req, res) => {
+  const db = await readDb();
   const meal = db.meals.find((m) => m.id === req.params.id);
   if (!meal) {
     return res.status(404).json({ error: "Meal not found" });
@@ -64,10 +64,10 @@ router.get("/:id", (req, res) => {
   return res.json({ meal });
 });
 
-router.post("/", requireAuth, requireVerifiedDonor, validate(createMealSchema), (req, res) => {
+router.post("/", requireAuth, requireVerifiedDonor, validate(createMealSchema), async (req, res) => {
   const payload = req.body || {};
 
-  const db = readDb();
+  const db = await readDb();
   const user = db.users.find((u) => u.id === req.user.id);
 
   const meal = {
@@ -91,13 +91,13 @@ router.post("/", requireAuth, requireVerifiedDonor, validate(createMealSchema), 
   };
 
   db.meals.push(meal);
-  writeDb(db);
+  await writeDb(db);
 
   return res.status(201).json({ meal });
 });
 
-router.patch("/:id", requireAuth, (req, res) => {
-  const db = readDb();
+router.patch("/:id", requireAuth, async (req, res) => {
+  const db = await readDb();
   const meal = db.meals.find((m) => m.id === req.params.id);
 
   if (!meal) {
@@ -122,7 +122,7 @@ router.patch("/:id", requireAuth, (req, res) => {
     meal.reserved_by_name = req.user.name;
     meal.updated_date = now;
 
-    writeDb(db);
+    await writeDb(db);
     return res.json({ meal });
   }
 
@@ -152,13 +152,13 @@ router.patch("/:id", requireAuth, (req, res) => {
   }
 
   meal.updated_date = now;
-  writeDb(db);
+  await writeDb(db);
 
   return res.json({ meal });
 });
 
-router.delete("/:id", requireAuth, (req, res) => {
-  const db = readDb();
+router.delete("/:id", requireAuth, async (req, res) => {
+  const db = await readDb();
   const idx = db.meals.findIndex((m) => m.id === req.params.id);
 
   if (idx === -1) {
@@ -171,8 +171,14 @@ router.delete("/:id", requireAuth, (req, res) => {
     return res.status(403).json({ error: "Not allowed" });
   }
 
+  const removedMeal = db.meals[idx];
   db.meals.splice(idx, 1);
-  writeDb(db);
+
+  await Promise.all([
+    writeDb(db),
+    deleteMealById(removedMeal?.id),
+  ]);
+
   return res.status(204).end();
 });
 

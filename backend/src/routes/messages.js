@@ -7,14 +7,14 @@ const router = express.Router();
 
 router.use(requireAuth);
 
-router.post("/", (req, res) => {
+router.post("/", async (req, res) => {
   const { toEmail, content } = req.body || {};
 
   if (!toEmail || !content) {
     return res.status(400).json({ error: "toEmail and content are required" });
   }
 
-  const db = readDb();
+  const db = await readDb();
   const recipient = db.users.find((u) => u.email === String(toEmail).toLowerCase().trim());
 
   if (!recipient) {
@@ -31,13 +31,13 @@ router.post("/", (req, res) => {
   };
 
   db.messages.push(message);
-  writeDb(db);
+  await writeDb(db);
 
   return res.status(201).json({ message });
 });
 
-router.get("/conversations", (req, res) => {
-  const db = readDb();
+router.get("/conversations", async (req, res) => {
+  const db = await readDb();
   const mine = db.messages.filter(
     (m) => m.fromEmail === req.user.email || m.toEmail === req.user.email
   );
@@ -72,9 +72,9 @@ router.get("/conversations", (req, res) => {
   return res.json({ conversations });
 });
 
-router.get("/with/:partnerEmail", (req, res) => {
+router.get("/with/:partnerEmail", async (req, res) => {
   const partnerEmail = String(req.params.partnerEmail || "").toLowerCase();
-  const db = readDb();
+  const db = await readDb();
 
   const messages = db.messages
     .filter(
@@ -87,8 +87,8 @@ router.get("/with/:partnerEmail", (req, res) => {
   return res.json({ messages });
 });
 
-router.patch("/:id/read", (req, res) => {
-  const db = readDb();
+router.patch("/:id/read", async (req, res) => {
+  const db = await readDb();
   const msg = db.messages.find((m) => m.id === req.params.id);
 
   if (!msg) {
@@ -100,7 +100,7 @@ router.patch("/:id/read", (req, res) => {
   }
 
   msg.isRead = true;
-  writeDb(db);
+  await writeDb(db);
 
   return res.json({ message: msg });
 });

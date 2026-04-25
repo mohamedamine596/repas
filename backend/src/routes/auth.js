@@ -346,14 +346,14 @@ function pruneRefreshSessions(user) {
   user.refreshTokens = filtered.slice(-10);
 }
 
-function startSession(res, db, user) {
+async function startSession(res, db, user) {
   const { tokenId, accessToken, refreshToken } = issueTokenPair(user);
 
   pruneRefreshSessions(user);
   user.refreshTokens.push(createSessionFromRefreshToken(refreshToken, tokenId));
   user.updatedAt = new Date().toISOString();
 
-  writeDb(db);
+  await writeDb(db);
   setRefreshCookie(res, refreshToken);
 
   return {
@@ -363,7 +363,7 @@ function startSession(res, db, user) {
 }
 
 router.post("/register", authLimiter, validate(registerSchema), async (req, res) => {
-  const db = readDb();
+  const db = await readDb();
   const normalizedEmail = String(req.body.email).toLowerCase().trim();
   const exists = db.users.find((item) => item.email === normalizedEmail);
 
@@ -426,7 +426,7 @@ router.post("/register", authLimiter, validate(registerSchema), async (req, res)
 
   db.users.push(user);
 
-  writeDb(db);
+  await writeDb(db);
 
   let emailNotification = { delivered: false, skipped: true };
   try {
@@ -455,7 +455,7 @@ router.post("/register", authLimiter, validate(registerSchema), async (req, res)
 });
 
 router.post("/login", authLimiter, validate(loginSchema), async (req, res) => {
-  const db = readDb();
+  const db = await readDb();
   const normalizedEmail = String(req.body.email).toLowerCase().trim();
   const user = db.users.find((item) => item.email === normalizedEmail);
 
@@ -475,7 +475,7 @@ router.post("/login", authLimiter, validate(loginSchema), async (req, res) => {
   if (!ok) {
     registerFailedLogin(user);
     user.updatedAt = new Date().toISOString();
-    writeDb(db);
+    await writeDb(db);
 
     if (isUserLocked(user)) {
       return res.status(423).json({
@@ -496,7 +496,7 @@ router.post("/login", authLimiter, validate(loginSchema), async (req, res) => {
 
   if (user.accountStatus === ACCOUNT_STATUS.SUSPENDED) {
     user.updatedAt = new Date().toISOString();
-    writeDb(db);
+    await writeDb(db);
     return res.status(403).json({
       error: "Votre compte est suspendu. Contactez l'administration.",
       code: "ACCOUNT_SUSPENDED",
@@ -507,7 +507,7 @@ router.post("/login", authLimiter, validate(loginSchema), async (req, res) => {
 
   if (!user.isEmailVerified) {
     user.updatedAt = new Date().toISOString();
-    writeDb(db);
+    await writeDb(db);
     return res.status(403).json({
       error: "Email non verifie. Entrez le code OTP pour continuer.",
       code: user.role === USER_ROLES.DONOR ? "DONOR_EMAIL_PENDING" : "EMAIL_OTP_REQUIRED",
@@ -521,7 +521,7 @@ router.post("/login", authLimiter, validate(loginSchema), async (req, res) => {
     user.accountStatus !== ACCOUNT_STATUS.EMAIL_VERIFIED
   ) {
     user.updatedAt = new Date().toISOString();
-    writeDb(db);
+    await writeDb(db);
 
     if (user.accountStatus === ACCOUNT_STATUS.EMAIL_PENDING) {
       return res.status(403).json({
@@ -538,7 +538,7 @@ router.post("/login", authLimiter, validate(loginSchema), async (req, res) => {
     });
   }
 
-  const session = startSession(res, db, user);
+  const session = await startSession(res, db, user);
   const redirectPath =
     user.role === USER_ROLES.DONOR && user.accountStatus === ACCOUNT_STATUS.EMAIL_VERIFIED
       ? "/DonorDocumentUpload"
@@ -550,7 +550,7 @@ router.post("/login", authLimiter, validate(loginSchema), async (req, res) => {
   });
 });
 
-router.post("/refresh", authLimiter, (req, res) => {
+router.post("/refresh", authLimiter, async (req, res) => {
   const token = getRefreshTokenFromRequest(req);
 
   if (!token) {
@@ -570,7 +570,7 @@ router.post("/refresh", authLimiter, (req, res) => {
     return res.status(401).json({ error: "Invalid refresh token type" });
   }
 
-  const db = readDb();
+  const db = await readDb();
   const user = db.users.find((item) => item.id === payload.sub);
 
   if (!user) {
@@ -592,14 +592,14 @@ router.post("/refresh", authLimiter, (req, res) => {
 
   if (session.expiresAt && new Date(session.expiresAt).getTime() <= Date.now()) {
     session.revokedAt = new Date().toISOString();
-    writeDb(db);
+    await writeDb(db);
     clearRefreshCookie(res);
     return res.status(401).json({ error: "Refresh token expired" });
   }
 
   if (user.accountStatus === ACCOUNT_STATUS.SUSPENDED) {
     session.revokedAt = new Date().toISOString();
-    writeDb(db);
+    await writeDb(db);
     clearRefreshCookie(res);
     return res.status(403).json({
       error: "Votre compte est suspendu.",
@@ -609,17 +609,17 @@ router.post("/refresh", authLimiter, (req, res) => {
   }
 
   session.revokedAt = new Date().toISOString();
-  const nextSession = startSession(res, db, user);
+  const nextSession = await startSession(res, db, user);
   return res.json(nextSession);
 });
 
-router.post("/logout", (req, res) => {
+router.post("/logout", async (req, res) => {
   const token = getRefreshTokenFromRequest(req);
   if (token) {
     try {
       const payload = verifyRefreshToken(token);
       if (payload.type === "refresh") {
-        const db = readDb();
+        const db = await readDb();
         const user = db.users.find((item) => item.id === payload.sub);
 
         if (user && Array.isArray(user.refreshTokens)) {
@@ -630,7 +630,7 @@ router.post("/logout", (req, res) => {
           if (session && !session.revokedAt) {
             session.revokedAt = new Date().toISOString();
             user.updatedAt = new Date().toISOString();
-            writeDb(db);
+            await writeDb(db);
           }
         }
       }
@@ -643,8 +643,8 @@ router.post("/logout", (req, res) => {
   return res.json({ ok: true });
 });
 
-router.post("/otp/verify", authLimiter, validate(otpVerifySchema), (req, res) => {
-  const db = readDb();
+router.post("/otp/verify", authLimiter, validate(otpVerifySchema), async (req, res) => {
+  const db = await readDb();
   const normalizedEmail = String(req.body.email).toLowerCase().trim();
   const user = db.users.find((item) => item.email === normalizedEmail);
 
@@ -662,7 +662,7 @@ router.post("/otp/verify", authLimiter, validate(otpVerifySchema), (req, res) =>
   if (secondsUntil(user.emailOtp.expiresAt) === 0) {
     clearOtpForUser(user);
     user.updatedAt = new Date().toISOString();
-    writeDb(db);
+    await writeDb(db);
     return res.status(410).json({
       error: "Code OTP expire. Demandez un nouveau code.",
       code: "OTP_EXPIRED",
@@ -676,14 +676,14 @@ router.post("/otp/verify", authLimiter, validate(otpVerifySchema), (req, res) =>
 
     if (user.emailOtp.attempts >= OTP_MAX_ATTEMPTS) {
       clearOtpForUser(user);
-      writeDb(db);
+      await writeDb(db);
       return res.status(429).json({
         error: "Trop de tentatives OTP. Demandez un nouveau code.",
         code: "OTP_TOO_MANY_ATTEMPTS",
       });
     }
 
-    writeDb(db);
+    await writeDb(db);
     return res.status(400).json({ error: "Code OTP invalide", code: "OTP_INVALID" });
   }
 
@@ -701,7 +701,7 @@ router.post("/otp/verify", authLimiter, validate(otpVerifySchema), (req, res) =>
 
   user.updatedAt = now;
 
-  const session = startSession(res, db, user);
+  const session = await startSession(res, db, user);
   const needsDonorQuiz =
     user.role === USER_ROLES.DONOR && user.accountStatus === ACCOUNT_STATUS.EMAIL_VERIFIED;
 
@@ -714,7 +714,7 @@ router.post("/otp/verify", authLimiter, validate(otpVerifySchema), (req, res) =>
 });
 
 router.post("/otp/resend", authLimiter, validate(otpResendSchema), async (req, res) => {
-  const db = readDb();
+  const db = await readDb();
   const normalizedEmail = String(req.body.email).toLowerCase().trim();
   const user = db.users.find((item) => item.email === normalizedEmail);
 
@@ -743,7 +743,7 @@ router.post("/otp/resend", authLimiter, validate(otpResendSchema), async (req, r
   const otpCode = generateOtpCode();
   setOtpForUser(user, otpCode);
   user.updatedAt = new Date().toISOString();
-  writeDb(db);
+  await writeDb(db);
 
   let emailNotification = { delivered: false, skipped: true };
   try {
@@ -768,7 +768,7 @@ router.post("/otp/resend", authLimiter, validate(otpResendSchema), async (req, r
 });
 
 router.post("/forgot-password", authLimiter, validate(forgotPasswordSchema), async (req, res) => {
-  const db = readDb();
+  const db = await readDb();
   const normalizedEmail = String(req.body.email).toLowerCase().trim();
   const user = db.users.find((item) => item.email === normalizedEmail);
 
@@ -789,7 +789,7 @@ router.post("/forgot-password", authLimiter, validate(forgotPasswordSchema), asy
     usedAt: null,
   };
   user.updatedAt = new Date().toISOString();
-  writeDb(db);
+  await writeDb(db);
 
   const appBaseUrl =
     process.env.FRONTEND_APP_URL || process.env.APP_URL || "http://localhost:5173";
@@ -814,7 +814,7 @@ router.post("/forgot-password", authLimiter, validate(forgotPasswordSchema), asy
 });
 
 router.post("/reset-password", authLimiter, validate(resetPasswordSchema), async (req, res) => {
-  const db = readDb();
+  const db = await readDb();
   const normalizedEmail = String(req.body.email).toLowerCase().trim();
   const user = db.users.find((item) => item.email === normalizedEmail);
 
@@ -841,13 +841,13 @@ router.post("/reset-password", authLimiter, validate(resetPasswordSchema), async
   user.refreshTokens = [];
   user.updatedAt = new Date().toISOString();
 
-  writeDb(db);
+  await writeDb(db);
 
   return res.json({ message: "Mot de passe mis a jour avec succes" });
 });
 
-router.get("/donor-quiz/status", requireAuth, requireRole(USER_ROLES.DONOR), (req, res) => {
-  const db = readDb();
+router.get("/donor-quiz/status", requireAuth, requireRole(USER_ROLES.DONOR), async (req, res) => {
+  const db = await readDb();
   const user = db.users.find((item) => item.id === req.user.id);
 
   if (!user) {
@@ -869,8 +869,8 @@ router.post(
   requireAuth,
   requireRole(USER_ROLES.DONOR),
   validate(donorQuizSchema),
-  (req, res) => {
-    const db = readDb();
+  async (req, res) => {
+    const db = await readDb();
     const user = db.users.find((item) => item.id === req.user.id);
 
     if (!user) {
@@ -954,7 +954,7 @@ router.post(
 
       ensureQuizRequest(db, user, score, total, now, user?.donorQuiz?.document);
       user.updatedAt = now;
-      writeDb(db);
+      await writeDb(db);
 
       return res.json({
         passed: true,
@@ -979,7 +979,7 @@ router.post(
     }
 
     user.updatedAt = now;
-    writeDb(db);
+    await writeDb(db);
 
     return res.json({
       passed: false,
@@ -1000,8 +1000,8 @@ router.post(
   }
 );
 
-router.get("/me", requireAuth, (req, res) => {
-  const db = readDb();
+router.get("/me", requireAuth, async (req, res) => {
+  const db = await readDb();
   const user = db.users.find((u) => u.id === req.user.id);
   if (!user) {
     return res.status(404).json({ error: "User not found" });
@@ -1009,9 +1009,9 @@ router.get("/me", requireAuth, (req, res) => {
   return res.json({ user: publicUser(user) });
 });
 
-router.patch("/me", requireAuth, validate(updateMeSchema), (req, res) => {
+router.patch("/me", requireAuth, validate(updateMeSchema), async (req, res) => {
   const { name, fullName, bio, phone } = req.body || {};
-  const db = readDb();
+  const db = await readDb();
   const user = db.users.find((u) => u.id === req.user.id);
 
   if (!user) {
@@ -1030,8 +1030,9 @@ router.patch("/me", requireAuth, validate(updateMeSchema), (req, res) => {
 
   user.updatedAt = new Date().toISOString();
 
-  writeDb(db);
+  await writeDb(db);
   return res.json({ user: publicUser(user) });
 });
 
 export default router;
+

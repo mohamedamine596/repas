@@ -13,7 +13,7 @@ export function AdminProvider({ children }) {
   const initial = useMemo(() => buildInitialAdminState(), []);
 
   const [donors, setDonors] = useState(initial.donors);
-  const [receivers] = useState(initial.receivers);
+  const [receivers, setReceivers] = useState(initial.receivers);
   const [donations, setDonations] = useState(initial.donations);
   const [reports, setReports] = useState(initial.reports);
   const [adminAccounts, setAdminAccounts] = useState(initial.adminAccounts);
@@ -35,6 +35,11 @@ export function AdminProvider({ children }) {
   const receiverLookup = useMemo(
     () => Object.fromEntries(receivers.map((receiver) => [receiver.id, receiver])),
     [receivers]
+  );
+
+  const adminLookup = useMemo(
+    () => Object.fromEntries(adminAccounts.map((admin) => [admin.id, admin])),
+    [adminAccounts]
   );
 
   const openReportsByDonor = useMemo(() => {
@@ -141,6 +146,161 @@ export function AdminProvider({ children }) {
       pushActivity(`Email envoye a ${donor.name}: ${subject}`);
     },
     [donorLookup, pushActivity]
+  );
+
+  // Swap this action with backend API call: POST /admin/emails/send
+  const sendEmailToReceiver = useCallback(
+    (receiverId, subject = "Notification admin") => {
+      const receiver = receiverLookup[receiverId];
+      if (!receiver) return;
+      pushActivity(`Email envoye a ${receiver.name}: ${subject}`);
+    },
+    [receiverLookup, pushActivity]
+  );
+
+  // Swap this action with backend API call: POST /admin/emails/send-bulk
+  const sendEmailToUsers = useCallback(
+    (targets, subject = "Communication admin") => {
+      if (!Array.isArray(targets) || targets.length === 0) {
+        return { sent: 0, donors: 0, receivers: 0, admins: 0, skipped: 0 };
+      }
+
+      let donorsCount = 0;
+      let receiversCount = 0;
+      let adminsCount = 0;
+      let skipped = 0;
+
+      targets.forEach((target) => {
+        if (target.role === "DONOR" && donorLookup[target.id]) {
+          donorsCount += 1;
+          return;
+        }
+
+        if (target.role === "RECEIVER" && receiverLookup[target.id]) {
+          receiversCount += 1;
+          return;
+        }
+
+        if (target.role === "ADMIN" && adminLookup[target.id]) {
+          adminsCount += 1;
+          return;
+        }
+
+        skipped += 1;
+      });
+
+      const sent = donorsCount + receiversCount + adminsCount;
+      if (sent > 0) {
+        pushActivity(
+          `Email groupé envoyé (${subject}) à ${sent} utilisateur(s): ${donorsCount} donneur(s), ${receiversCount} receveur(s), ${adminsCount} admin(s).`
+        );
+      }
+
+      return {
+        sent,
+        donors: donorsCount,
+        receivers: receiversCount,
+        admins: adminsCount,
+        skipped,
+      };
+    },
+    [donorLookup, receiverLookup, adminLookup, pushActivity]
+  );
+
+  // Swap this mutation with backend API call: PATCH /admin/users/status/bulk
+  const activateUsers = useCallback(
+    (targets) => {
+      if (!Array.isArray(targets) || targets.length === 0) {
+        return { updated: 0, donors: 0, receivers: 0, skippedAdmins: 0 };
+      }
+
+      const donorIds = new Set(targets.filter((item) => item.role === "DONOR").map((item) => item.id));
+      const receiverIds = new Set(targets.filter((item) => item.role === "RECEIVER").map((item) => item.id));
+      const skippedAdmins = targets.filter((item) => item.role === "ADMIN").length;
+
+      if (donorIds.size > 0) {
+        setDonors((prev) =>
+          prev.map((donor) =>
+            donorIds.has(donor.id)
+              ? { ...donor, status: "actif", suspensionReason: "" }
+              : donor
+          )
+        );
+      }
+
+      if (receiverIds.size > 0) {
+        setReceivers((prev) =>
+          prev.map((receiver) =>
+            receiverIds.has(receiver.id)
+              ? { ...receiver, status: "actif", suspensionReason: "" }
+              : receiver
+          )
+        );
+      }
+
+      const updated = donorIds.size + receiverIds.size;
+      if (updated > 0) {
+        pushActivity(
+          `Activation en masse: ${updated} compte(s) mis à jour (${donorIds.size} donneur(s), ${receiverIds.size} receveur(s)).`
+        );
+      }
+
+      return {
+        updated,
+        donors: donorIds.size,
+        receivers: receiverIds.size,
+        skippedAdmins,
+      };
+    },
+    [pushActivity]
+  );
+
+  // Swap this mutation with backend API call: PATCH /admin/users/status/bulk
+  const suspendUsers = useCallback(
+    (targets, reason = "Suspension manuelle par admin") => {
+      if (!Array.isArray(targets) || targets.length === 0) {
+        return { updated: 0, donors: 0, receivers: 0, skippedAdmins: 0 };
+      }
+
+      const donorIds = new Set(targets.filter((item) => item.role === "DONOR").map((item) => item.id));
+      const receiverIds = new Set(targets.filter((item) => item.role === "RECEIVER").map((item) => item.id));
+      const skippedAdmins = targets.filter((item) => item.role === "ADMIN").length;
+
+      if (donorIds.size > 0) {
+        setDonors((prev) =>
+          prev.map((donor) =>
+            donorIds.has(donor.id)
+              ? { ...donor, status: "suspendu", suspensionReason: reason }
+              : donor
+          )
+        );
+      }
+
+      if (receiverIds.size > 0) {
+        setReceivers((prev) =>
+          prev.map((receiver) =>
+            receiverIds.has(receiver.id)
+              ? { ...receiver, status: "suspendu", suspensionReason: reason }
+              : receiver
+          )
+        );
+      }
+
+      const updated = donorIds.size + receiverIds.size;
+      if (updated > 0) {
+        pushActivity(
+          `Suspension en masse: ${updated} compte(s) mis à jour (${donorIds.size} donneur(s), ${receiverIds.size} receveur(s)).`
+        );
+      }
+
+      return {
+        updated,
+        donors: donorIds.size,
+        receivers: receiverIds.size,
+        skippedAdmins,
+      };
+    },
+    [pushActivity]
   );
 
   // Swap this action with backend API call: POST /admin/donations/{id}/flag
@@ -268,6 +428,10 @@ export function AdminProvider({ children }) {
       activateDonors,
       suspendDonors,
       sendEmailToDonor,
+      sendEmailToReceiver,
+      sendEmailToUsers,
+      activateUsers,
+      suspendUsers,
       flagDonationAsInappropriate,
       markReportAsResolved,
       warnDonorFromReport,
@@ -299,6 +463,10 @@ export function AdminProvider({ children }) {
       activateDonors,
       suspendDonors,
       sendEmailToDonor,
+      sendEmailToReceiver,
+      sendEmailToUsers,
+      activateUsers,
+      suspendUsers,
       flagDonationAsInappropriate,
       markReportAsResolved,
       warnDonorFromReport,

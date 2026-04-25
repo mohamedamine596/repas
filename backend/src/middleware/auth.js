@@ -10,7 +10,7 @@ function extractBearerToken(req) {
   return authHeader.slice(7);
 }
 
-export function requireAuth(req, res, next) {
+export async function requireAuth(req, res, next) {
   const token = extractBearerToken(req);
 
   if (!token) {
@@ -23,7 +23,7 @@ export function requireAuth(req, res, next) {
       return res.status(401).json({ error: "Invalid token type" });
     }
 
-    const db = readDb();
+    const db = await readDb();
     const user = db.users.find((item) => item.id === payload.sub);
     if (!user) {
       return res.status(401).json({ error: "User account does not exist" });

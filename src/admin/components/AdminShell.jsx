@@ -1,17 +1,50 @@
 import React, { useMemo, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import {
+  Apple,
   Bell,
   HandHeart,
+  Handshake,
+  Home,
   Menu,
+  Settings,
   ShieldCheck,
+  TriangleAlert,
+  Users,
+  UserRound,
   X,
   Search,
 } from "lucide-react";
 
-const SIDEBAR_LINKS = [
-  { to: "/admin/verifications", label: "Verifications", icon: ShieldCheck },
+const SIDEBAR_SECTIONS = [
+  {
+    title: "Pilotage",
+    links: [
+      { to: "/admin/overview", label: "Vue d'ensemble", icon: Home },
+      { to: "/admin/donations", label: "Donations", icon: Apple },
+      { to: "/admin/reports", label: "Signalements", icon: TriangleAlert },
+    ],
+  },
+  {
+    title: "Utilisateurs",
+    links: [
+      { to: "/admin/users", label: "Tous les utilisateurs", icon: Users },
+      { to: "/admin/donors", label: "Donneurs", icon: UserRound },
+      { to: "/admin/receivers", label: "Receveurs", icon: Handshake },
+      { to: "/admin/verifications", label: "Verifications", icon: ShieldCheck },
+    ],
+  },
+  {
+    title: "Configuration",
+    links: [{ to: "/admin/settings", label: "Parametres", icon: Settings }],
+  },
 ];
+
+const SIDEBAR_LINKS = SIDEBAR_SECTIONS.flatMap((section) => section.links);
+
+function isLinkActive(pathname, link) {
+  return pathname === link.to || pathname.startsWith(`${link.to}/`);
+}
 
 function SidebarNav({ onNavigate }) {
   const location = useLocation();
@@ -24,32 +57,41 @@ function SidebarNav({ onNavigate }) {
             <HandHeart className="w-5 h-5" />
           </span>
           <div>
-            <p className="font-semibold text-base leading-tight">Kind Harvest</p>
+            <p className="font-semibold text-base leading-tight">Repas</p>
             <p className="text-[11px] uppercase tracking-[0.15em] text-[#F5C77A]">Admin</p>
           </div>
         </Link>
       </div>
 
-      <nav className="flex-1 px-3 py-5 space-y-1">
-        {SIDEBAR_LINKS.map((item) => {
-          const Icon = item.icon;
-          const active = location.pathname === item.to;
-          return (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              onClick={onNavigate}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
-                active
-                  ? "bg-[#F5C77A] text-[#1A3E14] font-semibold"
-                  : "text-white/90 hover:bg-white/10"
-              }`}
-            >
-              <Icon className="w-4 h-4" />
-              {item.label}
-            </NavLink>
-          );
-        })}
+      <nav className="flex-1 px-3 py-5 overflow-y-auto">
+        {SIDEBAR_SECTIONS.map((section) => (
+          <div key={section.title} className="mb-5">
+            <p className="px-3 pb-1 text-[11px] uppercase tracking-[0.14em] text-white/60">
+              {section.title}
+            </p>
+            <div className="space-y-1">
+              {section.links.map((item) => {
+                const Icon = item.icon;
+                const active = isLinkActive(location.pathname, item);
+                return (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    onClick={onNavigate}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                      active
+                        ? "bg-[#F5C77A] text-[#1A3E14] font-semibold"
+                        : "text-white/90 hover:bg-white/10"
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    {item.label}
+                  </NavLink>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
 
       <div className="p-4 border-t border-white/15 text-xs text-white/80">
@@ -65,7 +107,7 @@ export default function AdminShell() {
   const location = useLocation();
 
   const pageTitle = useMemo(() => {
-    const match = SIDEBAR_LINKS.find((item) => location.pathname.startsWith(item.to));
+    const match = SIDEBAR_LINKS.find((item) => isLinkActive(location.pathname, item));
     return match ? match.label : "Administration";
   }, [location.pathname]);
 
@@ -88,7 +130,7 @@ export default function AdminShell() {
             </button>
 
             <div className="min-w-0">
-              <p className="text-xs uppercase tracking-[0.15em] text-[#7B6D59]">Kind Harvest</p>
+              <p className="text-xs uppercase tracking-[0.15em] text-[#7B6D59]">Repas</p>
               <h1 className="text-sm md:text-base font-semibold text-[#234D1A] truncate">{pageTitle}</h1>
             </div>
 

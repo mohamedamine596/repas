@@ -5,13 +5,13 @@ import { readDb, writeDb } from "../utils/db.js";
 
 const router = express.Router();
 
-router.post("/", requireAuth, (req, res) => {
+router.post("/", requireAuth, async (req, res) => {
   const { meal_id, reason, details } = req.body || {};
   if (!meal_id || !reason) {
     return res.status(400).json({ error: "meal_id and reason are required" });
   }
 
-  const db = readDb();
+  const db = await readDb();
   const report = {
     id: nanoid(),
     reporter_email: req.user.email,
@@ -22,7 +22,7 @@ router.post("/", requireAuth, (req, res) => {
   };
 
   db.reports.push(report);
-  writeDb(db);
+  await writeDb(db);
 
   return res.status(201).json({ report });
 });

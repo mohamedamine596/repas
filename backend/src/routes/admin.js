@@ -66,8 +66,8 @@ router.get(
   "/verifications/:id/document",
   requireAuth,
   requireRole(USER_ROLES.ADMIN),
-  (req, res) => {
-    const db = readDb();
+  async (req, res) => {
+    const db = await readDb();
     const request = db.verificationRequests.find((item) => item.id === req.params.id);
 
     if (!request) {
@@ -110,8 +110,8 @@ router.get(
   requireAuth,
   requireRole(USER_ROLES.ADMIN),
   validate(listSchema, "query"),
-  (req, res) => {
-    const db = readDb();
+  async (req, res) => {
+    const db = await readDb();
     const status = req.query.status || VERIFICATION_STATUS.PENDING;
 
     let requests = db.verificationRequests;
@@ -135,8 +135,8 @@ router.get(
   requireAuth,
   requireRole(USER_ROLES.ADMIN),
   validate(listUsersSchema, "query"),
-  (req, res) => {
-    const db = readDb();
+  async (req, res) => {
+    const db = await readDb();
     const role = req.query.role || "ALL";
     const accountStatus = req.query.accountStatus || "ALL";
 
@@ -164,7 +164,7 @@ router.put(
   requireRole(USER_ROLES.ADMIN),
   validate(reviewSchema),
   async (req, res) => {
-    const db = readDb();
+    const db = await readDb();
     const request = db.verificationRequests.find((item) => item.id === req.params.id);
 
     if (!request) {
@@ -216,7 +216,7 @@ router.put(
     }
     user.updatedAt = now;
 
-    writeDb(db);
+    await writeDb(db);
 
     let emailResult = { delivered: false, skipped: true };
     try {
@@ -236,5 +236,23 @@ router.put(
     });
   }
 );
+
+router.get("/debug", requireAuth, requireRole(USER_ROLES.ADMIN), async (req, res) => {
+  const db = await readDb();
+
+  return res.json({
+    usersCount: db.users.length,
+    verificationRequestsCount: db.verificationRequests.length,
+    verificationRequests: db.verificationRequests,
+    donorUsers: db.users
+      .filter((u) => u.role === USER_ROLES.DONOR)
+      .map((u) => ({
+        id: u.id,
+        email: u.email,
+        accountStatus: u.accountStatus,
+        verificationStatus: u.verificationStatus,
+      })),
+  });
+});
 
 export default router;
