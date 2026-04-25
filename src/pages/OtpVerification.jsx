@@ -26,7 +26,9 @@ export default function OtpVerification() {
     const fromState = location.state?.email;
     const fromSearch = new URLSearchParams(location.search).get("email");
     const fromStorage = window.localStorage.getItem("ctp_pending_email");
-    const resolvedEmail = String(fromState || fromSearch || fromStorage || "").trim().toLowerCase();
+    const resolvedEmail = String(fromState || fromSearch || fromStorage || "")
+      .trim()
+      .toLowerCase();
 
     if (!resolvedEmail) {
       toast.error("Adresse email manquante. Recommencez l'inscription.");
@@ -71,7 +73,10 @@ export default function OtpVerification() {
 
   const handlePaste = (event) => {
     event.preventDefault();
-    const pasted = event.clipboardData.getData("text").replace(/\D/g, "").slice(0, OTP_LENGTH);
+    const pasted = event.clipboardData
+      .getData("text")
+      .replace(/\D/g, "")
+      .slice(0, OTP_LENGTH);
     if (!pasted) {
       return;
     }
@@ -99,23 +104,24 @@ export default function OtpVerification() {
     try {
       const result = await verifyOtp({ email, code });
       window.localStorage.removeItem("ctp_pending_email");
-      toast.success("Email verifie avec succes.");
+      window.localStorage.removeItem("ctp_pending_role");
+      toast.success("Email vérifié avec succès.");
 
-      if (result?.user?.role === "DONOR" && result?.accountStatus === "email_verified") {
-        navigate(createPageUrl("DonorDocumentUpload"), { replace: true });
-        return;
-      }
+      const role = result?.user?.role;
+      const status = result?.accountStatus || result?.user?.accountStatus;
 
-      if (result?.user?.role === "ADMIN") {
+      // All users verified → go to dashboard
+      if (role === "ADMIN" || role === "ROLE_ADMIN") {
         navigate("/admin/dashboard", { replace: true });
         return;
       }
 
-      if (result?.user?.role === "DONOR") {
-        navigate("/donneur/dashboard", { replace: true });
+      if (role === "ROLE_RESTAURANT" || role === "DONOR") {
+        navigate("/restaurant/dashboard", { replace: true });
         return;
       }
 
+      // Receivers → dashboard
       navigate("/receveur/dashboard", { replace: true });
     } catch (error) {
       toast.error(error?.message || "Verification impossible");
@@ -138,7 +144,9 @@ export default function OtpVerification() {
       if (notification?.delivered) {
         toast.success(result?.message || "Nouveau code OTP envoye.");
       } else if (notification?.skipped) {
-        toast.warning("Code regenere, mais email non envoye (SMTP non configure).");
+        toast.warning(
+          "Code regenere, mais email non envoye (SMTP non configure).",
+        );
       } else if (notification && notification.delivered === false) {
         toast.warning("Code regenere, mais l'email n'a pas pu etre envoye.");
       } else {
@@ -174,7 +182,10 @@ export default function OtpVerification() {
       <form onSubmit={handleVerify} className="space-y-6">
         <div>
           <p className="text-[12px] font-semibold text-[#1d1d1d]">Code OTP</p>
-          <div className="mt-3 flex items-center gap-2 sm:gap-3" onPaste={handlePaste}>
+          <div
+            className="mt-3 flex items-center gap-2 sm:gap-3"
+            onPaste={handlePaste}
+          >
             {digits.map((digit, index) => (
               <input
                 key={index}
@@ -182,7 +193,9 @@ export default function OtpVerification() {
                   inputRefs.current[index] = node;
                 }}
                 value={digit}
-                onChange={(event) => handleDigitChange(index, event.target.value)}
+                onChange={(event) =>
+                  handleDigitChange(index, event.target.value)
+                }
                 onKeyDown={(event) => handleKeyDown(index, event)}
                 inputMode="numeric"
                 maxLength={1}

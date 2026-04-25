@@ -1,42 +1,42 @@
 {
   "users": [
     {
-      "id": "ZyGsrKTotAnQzxPH_hsyk",
-      "name": "Amine One",
-      "email": "amine1@test.com",
-      "password": "$2a$10$e.2N37BFg/giYvgzitXJMec.1jSGcCBBi2L5ApLbRw1TbhjXkPCyS",
-      "role": "RECEIVER",
+      "id": "_uXrgaLo1wzQDNV3jHway",
+      "name": "Admin",
+      "email": "admin@test.com",
+      "password": "$2a$12$xklYkuS665D5Sc4DxuEA4umDn1BAQ0qPcT1YmfOMZezIBQ.sdHRZm",
+      "role": "ROLE_ADMIN",
       "isVerified": true,
       "isEmailVerified": true,
+      "isPhoneVerified": true,
       "verificationStatus": "APPROVED",
       "accountStatus": "active",
       "statusHistory": [
         {
           "status": "active",
-          "at": "2026-04-11T12:00:04.290Z",
+          "at": "2026-04-25T18:26:04.8276155+01:00",
           "reason": ""
         }
       ],
-      "bio": "bio test",
-      "phone": "0600000000",
-      "createdAt": "2026-04-11T12:00:04.290Z",
-      "updatedAt": "2026-04-11T12:00:04.290Z",
+      "bio": "",
+      "phone": "",
+      "createdAt": "2026-04-25T18:26:04.8286154+01:00",
+      "updatedAt": "2026-04-25T18:26:04.8286154+01:00",
       "emailOtp": {
         "codeHash": "",
         "expiresAt": null,
         "resendAvailableAt": null,
         "attempts": 0,
         "lastSentAt": null,
-        "verifiedAt": null
+        "verifiedAt": "2026-04-25T18:26:04.8286154+01:00"
       },
-      "donorQuiz": {
+      "phoneOtp": {
+        "codeHash": "",
+        "expiresAt": null,
+        "resendAvailableAt": null,
         "attempts": 0,
-        "maxAttempts": 2,
-        "cooldownUntil": null,
-        "passedAt": null,
-        "lastAttemptAt": null,
-        "lastScore": 0,
-        "lastWrongAnswers": []
+        "lastSentAt": null,
+        "verifiedAt": "2026-04-25T18:26:04.8286154+01:00"
       },
       "passwordReset": {
         "tokenHash": "",
@@ -51,231 +51,42 @@
       "refreshTokens": []
     },
     {
-      "id": "CiG_azR3QeWRlrSkCP0WJ",
-      "name": "Amine Two",
-      "email": "amine2@test.com",
-      "password": "$2a$10$oIudBElAlI3VRxeXzmXZPeNgkAQUV00nxp6YwddkYAL40XMv1nkUG",
-      "role": "RECEIVER",
-      "isVerified": true,
-      "isEmailVerified": true,
-      "verificationStatus": "APPROVED",
-      "accountStatus": "active",
-      "statusHistory": [
-        {
-          "status": "active",
-          "at": "2026-04-11T12:00:04.442Z",
-          "reason": ""
-        }
-      ],
-      "bio": "",
-      "phone": "",
-      "createdAt": "2026-04-11T12:00:04.442Z",
-      "updatedAt": "2026-04-11T12:00:04.442Z",
-      "emailOtp": {
-        "codeHash": "",
-        "expiresAt": null,
-        "resendAvailableAt": null,
-        "attempts": 0,
-        "lastSentAt": null,
-        "verifiedAt": null
-      },
-      "donorQuiz": {
-        "attempts": 0,
-        "maxAttempts": 2,
-        "cooldownUntil": null,
-        "passedAt": null,
-        "lastAttemptAt": null,
-        "lastScore": 0,
-        "lastWrongAnswers": []
-      },
-      "passwordReset": {
-        "tokenHash": "",
-        "expiresAt": null,
-        "requestedAt": null,
-        "usedAt": null
-      },
-      "failedLoginCount": 0,
-      "lockoutUntil": null,
-      "lastFailedLoginAt": null,
-      "suspensionReason": "",
-      "refreshTokens": []
-    },
-    {
-      "id": "cm7AxlrI5iDEKuiKOoUK0",
-      "name": "Base Admin",
-      "email": "admin@coeurtablepartage.com",
-      "password": "$2a$12$oBQ3PLQ.henr4uOTPCqN1.NdxftXwFd/fzQWHltuXZ6yhQ1O6YEJO",
-      "role": "ADMIN",
-      "isVerified": true,
-      "isEmailVerified": true,
-      "verificationStatus": "APPROVED",
-      "accountStatus": "active",
-      "statusHistory": [
-        {
-          "status": "active",
-          "at": "2026-04-18T16:48:47.499Z",
-          "reason": ""
-        }
-      ],
-      "bio": "",
-      "phone": "",
-      "createdAt": "2026-04-18T16:48:47.499Z",
-      "updatedAt": "2026-04-18T16:49:38.287Z",
-      "emailOtp": {
-        "codeHash": "",
-        "expiresAt": null,
-        "resendAvailableAt": null,
-        "attempts": 0,
-        "lastSentAt": null,
-        "verifiedAt": "2026-04-18T16:48:47.499Z"
-      },
-      "donorQuiz": {
-        "attempts": 0,
-        "maxAttempts": 2,
-        "cooldownUntil": null,
-        "passedAt": null,
-        "lastAttemptAt": null,
-        "lastScore": 0,
-        "lastWrongAnswers": []
-      },
-      "passwordReset": {
-        "tokenHash": "",
-        "expiresAt": null,
-        "requestedAt": null,
-        "usedAt": null
-      },
-      "failedLoginCount": 0,
-      "lockoutUntil": null,
-      "lastFailedLoginAt": null,
-      "suspensionReason": "",
-      "refreshTokens": [
-        {
-          "id": "A6B7vyCAKlOmzsDYuCg3E",
-          "tokenHash": "62a541ce7e56de089f5831ca5ca23ea149f34974f8e0f74611adf8752acdc4d2",
-          "createdAt": "2026-04-18T16:48:48.005Z",
-          "expiresAt": "2026-04-25T16:48:48.000Z",
-          "revokedAt": null
-        },
-        {
-          "id": "mxH7aD-vnKdXVPmtza2SW",
-          "tokenHash": "5a2b94b7316410d2ac11e944f8ecadd51c3c7986fd92f50e99ab15a2d0f56df7",
-          "createdAt": "2026-04-18T16:49:38.287Z",
-          "expiresAt": "2026-04-25T16:49:38.000Z",
-          "revokedAt": null
-        }
-      ]
-    },
-    {
-      "id": "GvTmr07z2gcwFFqDGqJlB",
-      "name": "Receiver Test",
-      "email": "receiver.1776530975@example.com",
-      "password": "$2a$12$mexqhoO3VhXNgf3kLUr/meMa2UZE7WlJOcZrIa4/7LXaCSspbHEoi",
-      "role": "RECEIVER",
-      "isVerified": true,
-      "isEmailVerified": true,
-      "verificationStatus": "APPROVED",
-      "accountStatus": "active",
-      "statusHistory": [
-        {
-          "status": "active",
-          "at": "2026-04-18T16:49:35.982Z",
-          "reason": "register"
-        }
-      ],
-      "bio": "",
-      "phone": "",
-      "createdAt": "2026-04-18T16:49:35.982Z",
-      "updatedAt": "2026-04-18T16:49:39.835Z",
-      "emailOtp": {
-        "codeHash": "",
-        "expiresAt": null,
-        "resendAvailableAt": null,
-        "attempts": 0,
-        "lastSentAt": "2026-04-18T16:49:36.220Z",
-        "verifiedAt": "2026-04-18T16:49:36.506Z"
-      },
-      "donorQuiz": {
-        "attempts": 0,
-        "maxAttempts": 2,
-        "cooldownUntil": null,
-        "passedAt": null,
-        "lastAttemptAt": null,
-        "lastScore": 0,
-        "lastWrongAnswers": []
-      },
-      "passwordReset": {
-        "tokenHash": "",
-        "expiresAt": null,
-        "requestedAt": null,
-        "usedAt": null
-      },
-      "failedLoginCount": 5,
-      "lockoutUntil": "2026-04-18T17:04:39.835Z",
-      "lastFailedLoginAt": "2026-04-18T16:49:39.835Z",
-      "suspensionReason": "",
-      "refreshTokens": [
-        {
-          "id": "-_22-NuRMbRf_qu4XF_QQ",
-          "tokenHash": "ee406f03a60d87c679eb10a2295d700e4034e03faccd025deee188df2648b4f0",
-          "createdAt": "2026-04-18T16:49:36.508Z",
-          "expiresAt": "2026-04-25T16:49:36.000Z",
-          "revokedAt": null
-        }
-      ]
-    },
-    {
-      "id": "pDkQAjfeVHz8fM1hEApyl",
-      "name": "Donor Fail",
-      "email": "donorfail.1776530975@example.com",
-      "password": "$2a$12$gFhPpQzh58TVBgITof.Oh.gRpnxJp4YruIvyk/HW8iXlCuJOnft/m",
-      "role": "DONOR",
+      "id": "6nlQLaxr9SOMWU5PeI2UZ",
+      "name": "hihi",
+      "email": "aminebougueddima@gmail.com",
+      "password": "$2a$12$zK/g0ovB571ra91LtyHFM.iHm2vM5STTW9hxf.utRjukjw9ZmlEOe",
+      "role": "ROLE_RESTAURANT",
       "isVerified": false,
-      "isEmailVerified": true,
-      "verificationStatus": "REJECTED",
-      "accountStatus": "suspended",
+      "isEmailVerified": false,
+      "isPhoneVerified": false,
+      "verificationStatus": "PENDING",
+      "accountStatus": "email_pending",
       "statusHistory": [
         {
           "status": "email_pending",
-          "at": "2026-04-18T16:49:36.544Z",
-          "reason": "register"
-        },
-        {
-          "status": "email_verified",
-          "at": "2026-04-18T16:49:37.070Z",
-          "reason": "otp_verified"
-        },
-        {
-          "status": "suspended",
-          "at": "2026-04-18T16:49:37.183Z",
-          "reason": "quiz_failed_twice"
+          "at": "2026-04-25T17:26:54.047Z",
+          "reason": "register_restaurant"
         }
       ],
       "bio": "",
-      "phone": "",
-      "createdAt": "2026-04-18T16:49:36.544Z",
-      "updatedAt": "2026-04-18T16:49:37.509Z",
+      "phone": "56869276",
+      "createdAt": "2026-04-25T17:26:54.047Z",
+      "updatedAt": "2026-04-25T17:26:54.047Z",
       "emailOtp": {
+        "codeHash": "bbbc8563c0b3e996c38062a7141a27ea5450c7b844fe74276bd4b7104f6135cc",
+        "expiresAt": "2026-04-25T17:36:54.397Z",
+        "resendAvailableAt": "2026-04-25T17:27:54.397Z",
+        "attempts": 0,
+        "lastSentAt": "2026-04-25T17:26:54.397Z",
+        "verifiedAt": null
+      },
+      "phoneOtp": {
         "codeHash": "",
         "expiresAt": null,
         "resendAvailableAt": null,
         "attempts": 0,
-        "lastSentAt": "2026-04-18T16:49:36.814Z",
-        "verifiedAt": "2026-04-18T16:49:37.070Z"
-      },
-      "donorQuiz": {
-        "attempts": 2,
-        "maxAttempts": 2,
-        "cooldownUntil": null,
-        "passedAt": null,
-        "lastAttemptAt": "2026-04-18T16:49:37.183Z",
-        "lastScore": 0,
-        "lastWrongAnswers": [
-          0,
-          1,
-          2,
-          3,
-          4
-        ]
+        "lastSentAt": null,
+        "verifiedAt": null
       },
       "passwordReset": {
         "tokenHash": "",
@@ -286,74 +97,101 @@
       "failedLoginCount": 0,
       "lockoutUntil": null,
       "lastFailedLoginAt": null,
-      "suspensionReason": "Echec du quiz de securite alimentaire apres 2 tentatives. Contactez le support.",
-      "refreshTokens": [
-        {
-          "id": "3_4l2pJqgTzWJ1tYtxWoH",
-          "tokenHash": "770a81aa91515fe15e6ba2210d3e0286fb1b9ec835479aa802c569aeb52ef23a",
-          "createdAt": "2026-04-18T16:49:37.072Z",
-          "expiresAt": "2026-04-25T16:49:37.000Z",
-          "revokedAt": null
-        }
-      ]
+      "suspensionReason": "",
+      "refreshTokens": []
     },
     {
-      "id": "fmK3TRy9MuUUoB0k4dWaA",
-      "name": "Donor Pass",
-      "email": "donorpass.1776530975@example.com",
-      "password": "$2a$12$kFKGzQudGyN231t7CoZAxuPobAKqr7iSQx.CmA6UJVdTP17swqKeC",
-      "role": "DONOR",
+      "id": "JAtgaek6PFAZsDrWMsogL",
+      "name": "gourmant",
+      "email": "amineaahabougui@gmail.com",
+      "password": "$2a$12$4Q6nusEEUiNqCbxav3T2juWjbGEDi2d5WI1G9LpXnQbIjAqAQwCKS",
+      "role": "ROLE_RESTAURANT",
+      "isVerified": false,
+      "isEmailVerified": false,
+      "isPhoneVerified": false,
+      "verificationStatus": "PENDING",
+      "accountStatus": "email_pending",
+      "statusHistory": [
+        {
+          "status": "email_pending",
+          "at": "2026-04-25T17:29:33.258Z",
+          "reason": "register_restaurant"
+        }
+      ],
+      "bio": "",
+      "phone": "52978971",
+      "createdAt": "2026-04-25T17:29:33.258Z",
+      "updatedAt": "2026-04-25T17:29:33.258Z",
+      "emailOtp": {
+        "codeHash": "9e56c36cdbf0a54c5a476ca21dfb664b0717f68a3c31aa95f4285025d491bfb7",
+        "expiresAt": "2026-04-25T17:39:33.593Z",
+        "resendAvailableAt": "2026-04-25T17:30:33.593Z",
+        "attempts": 0,
+        "lastSentAt": "2026-04-25T17:29:33.593Z",
+        "verifiedAt": null
+      },
+      "phoneOtp": {
+        "codeHash": "",
+        "expiresAt": null,
+        "resendAvailableAt": null,
+        "attempts": 0,
+        "lastSentAt": null,
+        "verifiedAt": null
+      },
+      "passwordReset": {
+        "tokenHash": "",
+        "expiresAt": null,
+        "requestedAt": null,
+        "usedAt": null
+      },
+      "failedLoginCount": 0,
+      "lockoutUntil": null,
+      "lastFailedLoginAt": null,
+      "suspensionReason": "",
+      "refreshTokens": []
+    },
+    {
+      "id": "4TwrKgOgGI_fhLY9LRKIq",
+      "name": "horizon",
+      "email": "aminebougui@gmail.com",
+      "password": "$2a$12$DojRmiuty4pqkVpUS4y3WOIXXBCe7UlcldW7ScArQ4RfwKeEHrxra",
+      "role": "ROLE_RESTAURANT",
       "isVerified": true,
       "isEmailVerified": true,
+      "isPhoneVerified": false,
       "verificationStatus": "APPROVED",
       "accountStatus": "active",
       "statusHistory": [
         {
           "status": "email_pending",
-          "at": "2026-04-18T16:49:37.513Z",
-          "reason": "register"
-        },
-        {
-          "status": "email_verified",
-          "at": "2026-04-18T16:49:37.770Z",
-          "reason": "otp_verified"
-        },
-        {
-          "status": "quiz_passed",
-          "at": "2026-04-18T16:49:37.783Z",
-          "reason": "quiz_passed"
-        },
-        {
-          "status": "pending_admin_review",
-          "at": "2026-04-18T16:49:37.783Z",
-          "reason": "waiting_admin_review"
+          "at": "2026-04-25T17:31:44.727Z",
+          "reason": "register_restaurant"
         },
         {
           "status": "active",
-          "at": "2026-04-18T16:49:38.334Z",
-          "reason": "admin_approved"
+          "at": "2026-04-25T17:34:43.483Z",
+          "reason": "email_otp_verified"
         }
       ],
       "bio": "",
-      "phone": "",
-      "createdAt": "2026-04-18T16:49:37.513Z",
-      "updatedAt": "2026-04-18T16:49:38.595Z",
+      "phone": "52978971",
+      "createdAt": "2026-04-25T17:31:44.727Z",
+      "updatedAt": "2026-04-25T17:34:43.487Z",
       "emailOtp": {
         "codeHash": "",
         "expiresAt": null,
         "resendAvailableAt": null,
         "attempts": 0,
-        "lastSentAt": "2026-04-18T16:49:37.756Z",
-        "verifiedAt": "2026-04-18T16:49:37.770Z"
+        "lastSentAt": "2026-04-25T17:34:26.722Z",
+        "verifiedAt": "2026-04-25T17:34:43.483Z"
       },
-      "donorQuiz": {
-        "attempts": 1,
-        "maxAttempts": 2,
-        "cooldownUntil": null,
-        "passedAt": "2026-04-18T16:49:37.783Z",
-        "lastAttemptAt": "2026-04-18T16:49:37.783Z",
-        "lastScore": 5,
-        "lastWrongAnswers": []
+      "phoneOtp": {
+        "codeHash": "",
+        "expiresAt": null,
+        "resendAvailableAt": null,
+        "attempts": 0,
+        "lastSentAt": null,
+        "verifiedAt": null
       },
       "passwordReset": {
         "tokenHash": "",
@@ -367,220 +205,123 @@
       "suspensionReason": "",
       "refreshTokens": [
         {
-          "id": "9HJA_XEbUfBrK9Ui1bsPp",
-          "tokenHash": "67086e2305136478616792a809819698f632d86ecd8be85cd78a01fd8d9d8c77",
-          "createdAt": "2026-04-18T16:49:37.771Z",
-          "expiresAt": "2026-04-25T16:49:37.000Z",
-          "revokedAt": null
-        },
-        {
-          "id": "obPEIzRHtnpuiyP_oHM-5",
-          "tokenHash": "88609a8099a7370ae3a7ce7740a347b6759415b47bdb5939ed4708f7544471e6",
-          "createdAt": "2026-04-18T16:49:38.595Z",
-          "expiresAt": "2026-04-25T16:49:38.000Z",
-          "revokedAt": null
-        }
-      ]
-    },
-    {
-      "id": "q7tBYMXMYUH7B8bebThcs",
-      "name": "Reset User",
-      "email": "reset.1776530975@example.com",
-      "password": "$2a$12$z4Nb217voy8VIRC4i3XFY.gJI9qYT2Doe2pte377VnSvM.Qk05bi6",
-      "role": "RECEIVER",
-      "isVerified": true,
-      "isEmailVerified": true,
-      "verificationStatus": "APPROVED",
-      "accountStatus": "active",
-      "statusHistory": [
-        {
-          "status": "active",
-          "at": "2026-04-18T16:49:39.841Z",
-          "reason": "register"
-        }
-      ],
-      "bio": "",
-      "phone": "",
-      "createdAt": "2026-04-18T16:49:39.841Z",
-      "updatedAt": "2026-04-18T16:49:40.849Z",
-      "emailOtp": {
-        "codeHash": "",
-        "expiresAt": null,
-        "resendAvailableAt": null,
-        "attempts": 0,
-        "lastSentAt": "2026-04-18T16:49:40.079Z",
-        "verifiedAt": "2026-04-18T16:49:40.091Z"
-      },
-      "donorQuiz": {
-        "attempts": 0,
-        "maxAttempts": 2,
-        "cooldownUntil": null,
-        "passedAt": null,
-        "lastAttemptAt": null,
-        "lastScore": 0,
-        "lastWrongAnswers": []
-      },
-      "passwordReset": {
-        "tokenHash": "",
-        "expiresAt": null,
-        "requestedAt": "2026-04-18T16:49:40.104Z",
-        "usedAt": "2026-04-18T16:49:40.357Z"
-      },
-      "failedLoginCount": 0,
-      "lockoutUntil": null,
-      "lastFailedLoginAt": null,
-      "suspensionReason": "",
-      "refreshTokens": [
-        {
-          "id": "Jy58h15XaBPP19xLCtvz0",
-          "tokenHash": "fe0d7fa007de6257203aaf41d60e7334c4743eccd550da57474666ea7067a7c9",
-          "createdAt": "2026-04-18T16:49:40.849Z",
-          "expiresAt": "2026-04-25T16:49:40.000Z",
+          "id": "044eLlydvdpi5dscNclfZ",
+          "tokenHash": "1e3f6a25d3591371e8f9fe2c0b2ce11a5d6d2c4f35494a13f16a86da1a95e955",
+          "createdAt": "2026-04-25T17:34:43.486Z",
+          "expiresAt": "2026-05-02T17:34:43.000Z",
           "revokedAt": null
         }
       ]
     }
   ],
-  "messages": [
+  "messages": [],
+  "meals": [],
+  "reports": [],
+  "verificationRequests": [],
+  "restaurants": [
     {
-      "id": "1G1tZmWt7QNovOogvSGai",
-      "fromEmail": "amine1@test.com",
-      "toEmail": "amine2@test.com",
-      "content": "Hello from user1",
-      "isRead": true,
-      "createdAt": "2026-04-11T12:00:04.656Z"
-    },
-    {
-      "id": "g0VtZPOmEfYZ4AFIfEEsY",
-      "fromEmail": "amine1@test.com",
-      "toEmail": "amine2@test.com",
-      "content": "Hello from user1",
-      "isRead": false,
-      "createdAt": "2026-04-11T12:00:37.351Z"
-    },
-    {
-      "id": "0T9cLJKSTuKRHuIROnJdA",
-      "fromEmail": "amine1@test.com",
-      "toEmail": "amine2@test.com",
-      "content": "Hello from Postman",
-      "isRead": false,
-      "createdAt": "2026-04-11T12:44:10.086Z"
-    },
-    {
-      "id": "nf-j-m2Nni5fVHxBwb2Tk",
-      "fromEmail": "amine1@test.com",
-      "toEmail": "amine2@test.com",
-      "content": "Mark-read test",
-      "isRead": false,
-      "createdAt": "2026-04-11T12:48:09.346Z"
-    },
-    {
-      "id": "HbT9zg7cbywEERUJXfn_g",
-      "fromEmail": "amine1@test.com",
-      "toEmail": "amine2@test.com",
-      "content": "GTNERIEG",
-      "isRead": false,
-      "createdAt": "2026-04-11T14:07:23.317Z"
-    }
-  ],
-  "meals": [
-    {
-      "id": "L1B8qp1POuVl9UABbfgsR",
-      "title": "Test Meal",
-      "food_type": "repas_complet",
-      "description": "desc",
-      "quantity": "2 portions",
-      "available_date": "2026-04-12T12:00",
-      "delivery_option": "pickup",
-      "address": "Paris",
-      "latitude": null,
-      "longitude": null,
-      "photo_url": "",
-      "status": "available",
-      "donor_name": "Amine One",
-      "donor_email": "amine1@test.com",
-      "reserved_by": null,
-      "reserved_by_name": null,
-      "created_date": "2026-04-11T13:31:02.076Z"
-    },
-    {
-      "id": "F_oIxZYRSZ581zc5fZEOL",
-      "title": "API Meal",
-      "food_type": "autre",
-      "description": "test",
-      "quantity": "1",
-      "available_date": "2026-04-12T10:00",
-      "delivery_option": "both",
-      "address": "Lyon",
-      "latitude": null,
-      "longitude": null,
-      "photo_url": "",
-      "status": "reserved",
-      "donor_name": "Amine One",
-      "donor_email": "amine1@test.com",
-      "reserved_by": "amine2@test.com",
-      "reserved_by_name": "Amine Two",
-      "created_date": "2026-04-11T13:33:17.374Z"
-    },
-    {
-      "id": "CjrArKD-WnpLWh9WYu9bB",
-      "title": "Postman meals check",
-      "food_type": "autre",
-      "description": "d",
-      "quantity": "1",
-      "available_date": null,
-      "delivery_option": "pickup",
-      "address": "Paris",
-      "latitude": null,
-      "longitude": null,
-      "photo_url": "",
-      "status": "available",
-      "donor_name": "Amine One",
-      "donor_email": "amine1@test.com",
-      "reserved_by": null,
-      "reserved_by_name": null,
-      "created_date": "2026-04-11T14:02:11.155Z"
-    }
-  ],
-  "reports": [
-    {
-      "id": "F4RoT9r82dCP_ISxmj3j_",
-      "reporter_email": "amine1@test.com",
-      "meal_id": "F_oIxZYRSZ581zc5fZEOL",
-      "reason": "other",
-      "details": "check",
-      "created_date": "2026-04-11T13:33:17.385Z"
-    },
-    {
-      "id": "0H17pQyTdfOInYJPZG0qf",
-      "reporter_email": "amine1@test.com",
-      "meal_id": "CjrArKD-WnpLWh9WYu9bB",
-      "reason": "other",
-      "details": "",
-      "created_date": "2026-04-11T14:02:11.159Z"
-    }
-  ],
-  "verificationRequests": [
-    {
-      "id": "PlFAGvZ-xGc1552eIVio1",
-      "userId": "fmK3TRy9MuUUoB0k4dWaA",
-      "userEmail": "donorpass.1776530975@example.com",
-      "status": "APPROVED",
-      "createdAt": "2026-04-18T16:49:37.783Z",
-      "updatedAt": "2026-04-18T16:49:38.334Z",
-      "reviewedAt": "2026-04-18T16:49:38.334Z",
-      "reviewedBy": "cm7AxlrI5iDEKuiKOoUK0",
+      "id": "2Wef5eRhe77RJIrgJvogn",
+      "userId": "6nlQLaxr9SOMWU5PeI2UZ",
+      "businessName": "hihi",
+      "managerName": "rgrggr",
+      "siren": "652014051",
+      "sirenVerified": false,
+      "sirenVerifyMethod": "document",
+      "sirenVerifiedAt": null,
+      "sirenData": null,
+      "address": {
+        "street": "paris",
+        "city": "paris",
+        "postalCode": "75019",
+        "country": "FR",
+        "lat": null,
+        "lng": null
+      },
+      "documents": [],
+      "reviewedBy": null,
+      "reviewedAt": null,
       "rejectionReason": "",
-      "sourceType": "QUIZ",
-      "quizScore": 5,
-      "quizTotal": 5,
-      "document": {
-        "originalName": "",
-        "storedName": "",
-        "mimeType": "",
-        "size": 0,
-        "path": ""
-      }
+      "averageRating": null,
+      "ratingCount": 0,
+      "isFlaggedForReview": false,
+      "createdAt": "2026-04-25T17:26:54.047Z",
+      "updatedAt": "2026-04-25T17:26:54.047Z"
+    },
+    {
+      "id": "l866dT1ukS5N-QNr6L4IW",
+      "userId": "JAtgaek6PFAZsDrWMsogL",
+      "businessName": "gourmant",
+      "managerName": "bougui amine",
+      "siren": "552032534",
+      "sirenVerified": true,
+      "sirenVerifyMethod": "api",
+      "sirenVerifiedAt": "2026-04-25T17:29:33.258Z",
+      "sirenData": {
+        "siren": "552032534",
+        "legalName": "DANONE",
+        "naf": "70.10Z",
+        "createdAt": "1955-01-01",
+        "address": "59 RUE LA FAYETTE 75009 PARIS",
+        "city": "75109",
+        "postalCode": "75009",
+        "etatAdministratif": "A"
+      },
+      "address": {
+        "street": "12 rue de mort",
+        "city": "paris",
+        "postalCode": "75019",
+        "country": "FR",
+        "lat": null,
+        "lng": null
+      },
+      "documents": [],
+      "reviewedBy": null,
+      "reviewedAt": null,
+      "rejectionReason": "",
+      "averageRating": null,
+      "ratingCount": 0,
+      "isFlaggedForReview": false,
+      "createdAt": "2026-04-25T17:29:33.258Z",
+      "updatedAt": "2026-04-25T17:29:33.258Z"
+    },
+    {
+      "id": "PN0iZmFOVAerSlh9fto98",
+      "userId": "4TwrKgOgGI_fhLY9LRKIq",
+      "businessName": "horizon",
+      "managerName": "Mohamed Amine Bouguiddima",
+      "siren": "542110291",
+      "sirenVerified": true,
+      "sirenVerifyMethod": "api",
+      "sirenVerifiedAt": "2026-04-25T17:31:44.727Z",
+      "sirenData": {
+        "siren": "542110291",
+        "legalName": "ALLIANZ I.A.R.D.",
+        "naf": "65.12Z",
+        "createdAt": "1912-02-07",
+        "address": "CS 30051 1 COURS MICHELET 92800 PUTEAUX",
+        "city": "92062",
+        "postalCode": "92800",
+        "etatAdministratif": "A"
+      },
+      "address": {
+        "street": "zarzis mednine tunisia",
+        "city": "paris",
+        "postalCode": "75019",
+        "country": "FR",
+        "lat": null,
+        "lng": null
+      },
+      "documents": [],
+      "reviewedBy": null,
+      "reviewedAt": null,
+      "rejectionReason": "",
+      "averageRating": null,
+      "ratingCount": 0,
+      "isFlaggedForReview": false,
+      "createdAt": "2026-04-25T17:31:44.727Z",
+      "updatedAt": "2026-04-25T17:31:44.727Z"
     }
-  ]
+  ],
+  "ratings": [],
+  "auditLog": []
 }

@@ -12,7 +12,10 @@ export async function connectDb() {
 
   const uri = process.env.MONGODB_URI;
   if (!uri) {
-    throw new Error("MONGODB_URI is missing. Set it in environment variables.");
+    console.warn(
+      "⚠️  MONGODB_URI not set — skipping MongoDB connection (JSON flat-file mode).",
+    );
+    return;
   }
 
   await mongoose.connect(uri, {

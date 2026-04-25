@@ -19,41 +19,78 @@ const DEFAULT_DB = {
   meals: [],
   reports: [],
   verificationRequests: [],
+  restaurants: [],
+  ratings: [],
+  auditLog: [],
+};
+
+const LEGACY_ROLE_MAP = {
+  DONOR: USER_ROLES.RESTAURANT,
+  donor: USER_ROLES.RESTAURANT,
+  RECEIVER: USER_ROLES.RECEIVER,
+  receiver: USER_ROLES.RECEIVER,
+  ADMIN: USER_ROLES.ADMIN,
+  admin: USER_ROLES.ADMIN,
 };
 
 function normalizeRole(value) {
-  if (Object.values(USER_ROLES).includes(value)) {
-    return value;
-  }
-  return USER_ROLES.RECEIVER;
+  if (!value) return USER_ROLES.RECEIVER;
+  // Already canonical (e.g. "ROLE_RESTAURANT")
+  const canonical = new Set([
+    USER_ROLES.RESTAURANT,
+    USER_ROLES.RECEIVER,
+    USER_ROLES.ADMIN,
+  ]);
+  if (canonical.has(value)) return value;
+  // Legacy mapping (e.g. old db.json used "DONOR" / "RECEIVER" / "ADMIN")
+  return LEGACY_ROLE_MAP[value] || USER_ROLES.RECEIVER;
 }
 
+// Map legacy account status strings to canonical values
+const LEGACY_STATUS_MAP = {
+  approved: "active",
+  siren_verified: "active",
+  pending_admin_review: "active",
+  email_verified: "active",
+  phone_pending: "active",
+  quiz_passed: "active",
+  pending_review: "active",
+  documents_uploaded: "active",
+  rejected: "suspended",
+  revalidation_required: "active",
+};
+
 function normalizeAccountStatus(role, user) {
+  // Admins and receivers are auto-active
   if (role === USER_ROLES.ADMIN || role === USER_ROLES.RECEIVER) {
-    return ACCOUNT_STATUS.ACTIVE;
+    return "active";
   }
 
-  if (isAccountStatus(user.accountStatus)) {
-    return user.accountStatus;
+  // Map legacy status if present
+  const rawStatus = user.accountStatus || "";
+  const mappedStatus = LEGACY_STATUS_MAP[rawStatus] || rawStatus;
+
+  if (isAccountStatus(mappedStatus)) {
+    return mappedStatus;
   }
 
-  if (user.verificationStatus === VERIFICATION_STATUS.APPROVED || user.isVerified === true) {
-    return ACCOUNT_STATUS.ACTIVE;
+  // Derive from verification flags (backward compat)
+  if (
+    user.verificationStatus === VERIFICATION_STATUS.APPROVED ||
+    user.isVerified === true
+  ) {
+    return "active";
   }
 
   if (user.verificationStatus === VERIFICATION_STATUS.REJECTED) {
-    return ACCOUNT_STATUS.SUSPENDED;
+    return "suspended";
   }
 
   if (user.isEmailVerified === false) {
-    return ACCOUNT_STATUS.EMAIL_PENDING;
+    return "email_pending";
   }
 
-  if (user.donorQuiz?.passedAt || Number(user.donorQuiz?.lastScore) >= 4) {
-    return ACCOUNT_STATUS.PENDING_ADMIN_REVIEW;
-  }
-
-  return ACCOUNT_STATUS.EMAIL_PENDING;
+  return "email_pending";
 }
 
 function normalizeVerificationStatus(role, status, accountStatus) {
@@ -97,7 +134,10 @@ function normalizeStatusHistory(history, accountStatus, createdAt) {
         }))
     : [];
 
-  if (!safeHistory.length || safeHistory[safeHistory.length - 1].status !== accountStatus) {
+  if (
+    !safeHistory.length ||
+    safeHistory[safeHistory.length - 1].status !== accountStatus
+  ) {
     safeHistory.push({
       status: accountStatus,
       at: createdAt || new Date().toISOString(),
@@ -113,7 +153,9 @@ function normalizeEmailOtp(emailOtp) {
     codeHash: emailOtp?.codeHash || "",
     expiresAt: emailOtp?.expiresAt || null,
     resendAvailableAt: emailOtp?.resendAvailableAt || null,
-    attempts: Number.isFinite(Number(emailOtp?.attempts)) ? Number(emailOtp.attempts) : 0,
+    attempts: Number.isFinite(Number(emailOtp?.attempts))
+      ? Number(emailOtp.attempts)
+      : 0,
     lastSentAt: emailOtp?.lastSentAt || null,
     verifiedAt: emailOtp?.verifiedAt || null,
   };
@@ -132,14 +174,20 @@ function normalizeDonorQuiz(donorQuiz) {
   const document = donorQuiz?.document || {};
 
   return {
-    attempts: Number.isFinite(Number(donorQuiz?.attempts)) ? Number(donorQuiz.attempts) : 0,
+    attempts: Number.isFinite(Number(donorQuiz?.attempts))
+      ? Number(donorQuiz.attempts)
+      : 0,
     maxAttempts: 2,
     cooldownUntil: donorQuiz?.cooldownUntil || null,
     passedAt: donorQuiz?.passedAt || null,
     lastAttemptAt: donorQuiz?.lastAttemptAt || null,
-    lastScore: Number.isFinite(Number(donorQuiz?.lastScore)) ? Number(donorQuiz.lastScore) : null,
+    lastScore: Number.isFinite(Number(donorQuiz?.lastScore))
+      ? Number(donorQuiz.lastScore)
+      : null,
     lastWrongAnswers: Array.isArray(donorQuiz?.lastWrongAnswers)
-      ? donorQuiz.lastWrongAnswers.filter((item) => Number.isFinite(Number(item))).map(Number)
+      ? donorQuiz.lastWrongAnswers
+          .filter((item) => Number.isFinite(Number(item)))
+          .map(Number)
       : [],
     document: {
       originalName: document.originalName || "",
@@ -152,38 +200,65 @@ function normalizeDonorQuiz(donorQuiz) {
   };
 }
 
+function normalizePhoneOtp(phoneOtp) {
+  return {
+    codeHash: phoneOtp?.codeHash || "",
+    expiresAt: phoneOtp?.expiresAt || null,
+    resendAvailableAt: phoneOtp?.resendAvailableAt || null,
+    attempts: Number.isFinite(Number(phoneOtp?.attempts))
+      ? Number(phoneOtp.attempts)
+      : 0,
+    lastSentAt: phoneOtp?.lastSentAt || null,
+    verifiedAt: phoneOtp?.verifiedAt || null,
+  };
+}
+
 function normalizeUser(user) {
   const role = normalizeRole(user.role);
   const accountStatus = normalizeAccountStatus(role, user);
-  const verificationStatus = normalizeVerificationStatus(role, user.verificationStatus, accountStatus);
+  const verificationStatus = normalizeVerificationStatus(
+    role,
+    user.verificationStatus,
+    accountStatus,
+  );
   const createdAt = user.createdAt || new Date().toISOString();
   const isEmailVerified =
     typeof user.isEmailVerified === "boolean"
       ? user.isEmailVerified
-      : role === USER_ROLES.DONOR
-        ? accountStatus !== ACCOUNT_STATUS.EMAIL_PENDING
+      : role === USER_ROLES.RESTAURANT
+        ? accountStatus !== "email_pending"
         : true;
-  const isVerified = role === USER_ROLES.DONOR
-    ? accountStatus === ACCOUNT_STATUS.ACTIVE
-    : true;
+  const isPhoneVerified =
+    typeof user.isPhoneVerified === "boolean"
+      ? user.isPhoneVerified
+      : accountStatus !== "email_pending" && accountStatus !== "phone_pending";
+  const isVerified =
+    role === USER_ROLES.RESTAURANT ? accountStatus === "active" : true;
 
   return {
     id: user.id,
     name: (user.name || user.fullName || "").trim(),
-    email: String(user.email || "").toLowerCase().trim(),
+    email: String(user.email || "")
+      .toLowerCase()
+      .trim(),
     password: user.password || user.passwordHash || "",
     role,
     isVerified,
     isEmailVerified,
+    isPhoneVerified,
     verificationStatus,
     accountStatus,
-    statusHistory: normalizeStatusHistory(user.statusHistory, accountStatus, createdAt),
+    statusHistory: normalizeStatusHistory(
+      user.statusHistory,
+      accountStatus,
+      createdAt,
+    ),
     bio: user.bio || "",
     phone: user.phone || "",
     createdAt,
     updatedAt: user.updatedAt || createdAt,
     emailOtp: normalizeEmailOtp(user.emailOtp),
-    donorQuiz: normalizeDonorQuiz(user.donorQuiz),
+    phoneOtp: normalizePhoneOtp(user.phoneOtp),
     passwordReset: normalizePasswordReset(user.passwordReset),
     failedLoginCount: Number.isFinite(Number(user.failedLoginCount))
       ? Math.max(0, Number(user.failedLoginCount))
@@ -198,16 +273,19 @@ function normalizeUser(user) {
 }
 
 function normalizeVerificationRequest(item) {
-  const sourceType = item.sourceType === "DOCUMENT" || item.sourceType === "QUIZ"
-    ? item.sourceType
-    : item.document?.path
-      ? "DOCUMENT"
-      : "QUIZ";
+  const sourceType =
+    item.sourceType === "DOCUMENT" || item.sourceType === "QUIZ"
+      ? item.sourceType
+      : item.document?.path
+        ? "DOCUMENT"
+        : "QUIZ";
 
   return {
     id: item.id,
     userId: item.userId,
-    userEmail: String(item.userEmail || "").toLowerCase().trim(),
+    userEmail: String(item.userEmail || "")
+      .toLowerCase()
+      .trim(),
     status: Object.values(VERIFICATION_STATUS).includes(item.status)
       ? item.status
       : VERIFICATION_STATUS.PENDING,
@@ -217,8 +295,12 @@ function normalizeVerificationRequest(item) {
     reviewedBy: item.reviewedBy || null,
     rejectionReason: item.rejectionReason || "",
     sourceType,
-    quizScore: Number.isFinite(Number(item.quizScore)) ? Number(item.quizScore) : null,
-    quizTotal: Number.isFinite(Number(item.quizTotal)) ? Number(item.quizTotal) : null,
+    quizScore: Number.isFinite(Number(item.quizScore))
+      ? Number(item.quizScore)
+      : null,
+    quizTotal: Number.isFinite(Number(item.quizTotal))
+      ? Number(item.quizTotal)
+      : null,
     document: {
       originalName: item.document?.originalName || "",
       storedName: item.document?.storedName || "",
@@ -230,7 +312,11 @@ function normalizeVerificationRequest(item) {
 }
 
 function normalizeMeal(meal, userByEmail) {
-  const owner = userByEmail.get(String(meal.donor_email || "").toLowerCase().trim());
+  const owner = userByEmail.get(
+    String(meal.donor_email || "")
+      .toLowerCase()
+      .trim(),
+  );
 
   return {
     ...meal,
@@ -242,8 +328,12 @@ function normalizeMeal(meal, userByEmail) {
 function normalizeMessage(message) {
   return {
     ...message,
-    fromEmail: String(message.fromEmail || "").toLowerCase().trim(),
-    toEmail: String(message.toEmail || "").toLowerCase().trim(),
+    fromEmail: String(message.fromEmail || "")
+      .toLowerCase()
+      .trim(),
+    toEmail: String(message.toEmail || "")
+      .toLowerCase()
+      .trim(),
   };
 }
 
@@ -267,7 +357,11 @@ function getBaseAdminConfig() {
 function ensureBaseAdmin(normalizedDb) {
   const baseAdmin = getBaseAdminConfig();
 
-  if (!baseAdmin.email || !baseAdmin.password || baseAdmin.password.length < 8) {
+  if (
+    !baseAdmin.email ||
+    !baseAdmin.password ||
+    baseAdmin.password.length < 8
+  ) {
     return false;
   }
 
@@ -281,7 +375,9 @@ function ensureBaseAdmin(normalizedDb) {
     return baseAdminPasswordHash;
   };
 
-  const existingBaseAdmin = normalizedDb.users.find((user) => user.email === baseAdmin.email);
+  const existingBaseAdmin = normalizedDb.users.find(
+    (user) => user.email === baseAdmin.email,
+  );
 
   if (!existingBaseAdmin) {
     normalizedDb.users.push({
@@ -292,15 +388,16 @@ function ensureBaseAdmin(normalizedDb) {
       role: USER_ROLES.ADMIN,
       isVerified: true,
       isEmailVerified: true,
+      isPhoneVerified: true,
       verificationStatus: VERIFICATION_STATUS.APPROVED,
-      accountStatus: ACCOUNT_STATUS.ACTIVE,
-      statusHistory: [{ status: ACCOUNT_STATUS.ACTIVE, at: now, reason: "" }],
+      accountStatus: "active",
+      statusHistory: [{ status: "active", at: now, reason: "" }],
       bio: "",
       phone: "",
       createdAt: now,
       updatedAt: now,
       emailOtp: normalizeEmailOtp({ verifiedAt: now }),
-      donorQuiz: normalizeDonorQuiz(),
+      phoneOtp: normalizePhoneOtp({ verifiedAt: now }),
       passwordReset: normalizePasswordReset(),
       failedLoginCount: 0,
       lockoutUntil: null,
@@ -326,12 +423,17 @@ function ensureBaseAdmin(normalizedDb) {
       existingBaseAdmin.verificationStatus = VERIFICATION_STATUS.APPROVED;
       changed = true;
     }
-    if (existingBaseAdmin.accountStatus !== ACCOUNT_STATUS.ACTIVE) {
-      existingBaseAdmin.accountStatus = ACCOUNT_STATUS.ACTIVE;
+    if (existingBaseAdmin.accountStatus !== "active") {
+      existingBaseAdmin.accountStatus = "active";
       changed = true;
     }
-    if (!Array.isArray(existingBaseAdmin.statusHistory) || !existingBaseAdmin.statusHistory.length) {
-      existingBaseAdmin.statusHistory = [{ status: ACCOUNT_STATUS.ACTIVE, at: now, reason: "" }];
+    if (
+      !Array.isArray(existingBaseAdmin.statusHistory) ||
+      !existingBaseAdmin.statusHistory.length
+    ) {
+      existingBaseAdmin.statusHistory = [
+        { status: "active", at: now, reason: "" },
+      ];
       changed = true;
     }
     if (!existingBaseAdmin.name) {
@@ -353,8 +455,12 @@ function ensureBaseAdmin(normalizedDb) {
       user.isVerified = true;
       user.isEmailVerified = true;
       user.verificationStatus = VERIFICATION_STATUS.APPROVED;
-      user.accountStatus = ACCOUNT_STATUS.ACTIVE;
-      user.statusHistory = normalizeStatusHistory(user.statusHistory, ACCOUNT_STATUS.ACTIVE, now);
+      user.accountStatus = "active";
+      user.statusHistory = normalizeStatusHistory(
+        user.statusHistory,
+        "active",
+        now,
+      );
       user.updatedAt = now;
       changed = true;
     }
@@ -365,7 +471,7 @@ function ensureBaseAdmin(normalizedDb) {
 
 export function readDb() {
   ensureDbFile();
-  const raw = fs.readFileSync(DB_PATH, "utf8");
+  const raw = fs.readFileSync(DB_PATH, "utf8").replace(/^\uFEFF/, ""); // strip UTF-8 BOM if present
   const parsed = JSON.parse(raw);
   const normalized = { ...DEFAULT_DB, ...parsed };
 
@@ -373,13 +479,23 @@ export function readDb() {
   if (!Array.isArray(normalized.messages)) normalized.messages = [];
   if (!Array.isArray(normalized.meals)) normalized.meals = [];
   if (!Array.isArray(normalized.reports)) normalized.reports = [];
-  if (!Array.isArray(normalized.verificationRequests)) normalized.verificationRequests = [];
+  if (!Array.isArray(normalized.verificationRequests))
+    normalized.verificationRequests = [];
+  if (!Array.isArray(normalized.restaurants)) normalized.restaurants = [];
+  if (!Array.isArray(normalized.ratings)) normalized.ratings = [];
+  if (!Array.isArray(normalized.auditLog)) normalized.auditLog = [];
 
-  normalized.users = normalized.users.map(normalizeUser).filter((item) => item.id && item.email);
+  normalized.users = normalized.users
+    .map(normalizeUser)
+    .filter((item) => item.id && item.email);
 
-  const userByEmail = new Map(normalized.users.map((item) => [item.email, item]));
+  const userByEmail = new Map(
+    normalized.users.map((item) => [item.email, item]),
+  );
   normalized.messages = normalized.messages.map(normalizeMessage);
-  normalized.meals = normalized.meals.map((item) => normalizeMeal(item, userByEmail));
+  normalized.meals = normalized.meals.map((item) =>
+    normalizeMeal(item, userByEmail),
+  );
   normalized.verificationRequests = normalized.verificationRequests
     .map(normalizeVerificationRequest)
     .filter((item) => item.id && item.userId);
@@ -394,4 +510,18 @@ export function readDb() {
 export function writeDb(data) {
   const safeData = { ...DEFAULT_DB, ...data };
   fs.writeFileSync(DB_PATH, JSON.stringify(safeData, null, 2));
+}
+
+/**
+ * Remove a meal from db.json by id.
+ * Called by the meals router when deleting a meal.
+ */
+export async function deleteMealById(id) {
+  if (!id) return;
+  const db = await readDb();
+  const idx = db.meals.findIndex((m) => m.id === id);
+  if (idx !== -1) {
+    db.meals.splice(idx, 1);
+    await writeDb(db);
+  }
 }

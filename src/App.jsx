@@ -1,48 +1,56 @@
-import { Toaster } from "@/components/ui/toaster"
-import { Toaster as SonnerToaster } from "sonner"
-import { QueryClientProvider } from '@tanstack/react-query'
-import { queryClientInstance } from '@/lib/query-client'
-import { pagesConfig } from './pages.config'
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
-import PageNotFound from './lib/PageNotFound';
-import { AuthProvider, useAuth } from '@/lib/AuthContext';
-import UserNotRegisteredError from '@/components/UserNotRegisteredError';
-import { createPageUrl } from '@/utils';
-import AdminModule from '@/admin/AdminModule';
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as SonnerToaster } from "sonner";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClientInstance } from "@/lib/query-client";
+import { pagesConfig } from "./pages.config";
+import {
+  BrowserRouter as Router,
+  Route,
+  Routes,
+  Navigate,
+} from "react-router-dom";
+import PageNotFound from "./lib/PageNotFound";
+import { AuthProvider, useAuth } from "@/lib/AuthContext";
+import UserNotRegisteredError from "@/components/UserNotRegisteredError";
+import { createPageUrl } from "@/utils";
+import AdminModule from "@/admin/AdminModule";
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
 const MainPage = mainPageKey ? Pages[mainPageKey] : () => <></>;
 const PUBLIC_PAGES = new Set([
-  'Home',
-  'Login',
-  'About',
-  'MealsList',
-  'MealMap',
-  'OtpVerification',
-  'ForgotPassword',
-  'ResetPassword',
+  "Home",
+  "Login",
+  "About",
+  "MealsList",
+  "MealMap",
+  "OtpVerification",
+  "ForgotPassword",
+  "ResetPassword",
+  "RegisterRestaurant",
 ]);
 const PAGE_ROLE_GUARDS = {
-  PublishMeal: ['DONOR'],
-  DonorDocumentUpload: ['DONOR'],
-  AdminVerifications: ['ADMIN'],
+  PublishMeal: ["ROLE_RESTAURANT"],
+  AdminVerifications: ["ADMIN", "ROLE_ADMIN"],
 };
 
-const LayoutWrapper = ({ children, currentPageName }) => Layout ?
-  <Layout currentPageName={currentPageName}>{children}</Layout>
-  : <>{children}</>;
+const LayoutWrapper = ({ children, currentPageName }) =>
+  Layout ? (
+    <Layout currentPageName={currentPageName}>{children}</Layout>
+  ) : (
+    <>{children}</>
+  );
 
 const GuardedPage = ({ pageName, Page }) => {
   const { isAuthenticated, hasRole } = useAuth();
 
   if (!PUBLIC_PAGES.has(pageName) && !isAuthenticated) {
-    return <Navigate to={createPageUrl('Login')} replace />;
+    return <Navigate to={createPageUrl("Login")} replace />;
   }
 
   const allowedRoles = PAGE_ROLE_GUARDS[pageName];
   if (allowedRoles && !hasRole(...allowedRoles)) {
-    return <Navigate to={createPageUrl('Dashboard')} replace />;
+    return <Navigate to={createPageUrl("Dashboard")} replace />;
   }
 
   return (
@@ -56,11 +64,11 @@ const AdminGuardedModule = () => {
   const { isAuthenticated, hasRole } = useAuth();
 
   if (!isAuthenticated) {
-    return <Navigate to={createPageUrl('Login')} replace />;
+    return <Navigate to={createPageUrl("Login")} replace />;
   }
 
-  if (!hasRole('ADMIN')) {
-    return <Navigate to={createPageUrl('Dashboard')} replace />;
+  if (!hasRole("ADMIN")) {
+    return <Navigate to={createPageUrl("Dashboard")} replace />;
   }
 
   return <AdminModule />;
@@ -80,7 +88,7 @@ const AuthenticatedApp = () => {
 
   // Handle authentication errors
   if (authError) {
-    if (authError.type === 'user_not_registered') {
+    if (authError.type === "user_not_registered") {
       return <UserNotRegisteredError />;
     }
   }
@@ -89,9 +97,10 @@ const AuthenticatedApp = () => {
   return (
     <Routes>
       <Route path="/admin/*" element={<AdminGuardedModule />} />
-      <Route path="/" element={
-        <GuardedPage pageName={mainPageKey} Page={MainPage} />
-      } />
+      <Route
+        path="/"
+        element={<GuardedPage pageName={mainPageKey} Page={MainPage} />}
+      />
       <Route
         path="/receveur/dashboard"
         element={<GuardedPage pageName="Dashboard" Page={Pages.Dashboard} />}
@@ -112,9 +121,7 @@ const AuthenticatedApp = () => {
   );
 };
 
-
 function App() {
-
   return (
     <AuthProvider>
       <QueryClientProvider client={queryClientInstance}>
@@ -125,7 +132,7 @@ function App() {
         <SonnerToaster richColors position="top-right" />
       </QueryClientProvider>
     </AuthProvider>
-  )
+  );
 }
 
-export default App
+export default App;

@@ -1,6 +1,11 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
-import { backendApi, clearAccessToken, getAccessToken, setAccessToken } from '@/api/backendClient';
-import { createPageUrl } from '@/utils';
+import React, { createContext, useState, useContext, useEffect } from "react";
+import {
+  backendApi,
+  clearAccessToken,
+  getAccessToken,
+  setAccessToken,
+} from "@/api/backendClient";
+import { createPageUrl } from "@/utils";
 
 const AuthContext = createContext();
 
@@ -102,43 +107,56 @@ export const AuthProvider = ({ children }) => {
     setIsAuthenticated(false);
 
     if (shouldRedirect) {
-      window.location.assign(createPageUrl('Login'));
+      window.location.assign(createPageUrl("Login"));
     }
   };
 
   const navigateToLogin = () => {
-    window.location.assign(createPageUrl('Login'));
+    window.location.assign(createPageUrl("Login"));
   };
 
   const role = user?.role || null;
-  const isDonor = role === 'DONOR';
-  const isReceiver = role === 'RECEIVER';
-  const isAdmin = role === 'ADMIN';
-  const isVerifiedDonor = isDonor && user?.accountStatus === 'active';
-  const hasRole = (...roles) => roles.includes(role);
+  const isDonor = role === "DONOR" || role === "ROLE_RESTAURANT";
+  const isReceiver = role === "RECEIVER" || role === "ROLE_RECEIVER";
+  const isAdmin = role === "ADMIN" || role === "ROLE_ADMIN";
+  const isVerifiedDonor = isDonor && user?.accountStatus === "active";
+  // hasRole accepts both canonical (ROLE_RESTAURANT) and legacy (DONOR) names
+  const hasRole = (...roles) => {
+    const aliases = {
+      DONOR: "ROLE_RESTAURANT",
+      ROLE_RESTAURANT: "DONOR",
+      RECEIVER: "ROLE_RECEIVER",
+      ROLE_RECEIVER: "RECEIVER",
+      ADMIN: "ROLE_ADMIN",
+      ROLE_ADMIN: "ADMIN",
+    };
+    return roles.some((r) => r === role || aliases[r] === role);
+  };
 
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      isAuthenticated, 
-      token,
-      isLoadingAuth,
-      isLoadingPublicSettings,
-      authError,
-      appPublicSettings,
-      login,
-      register,
-      verifyOtp,
-      logout,
-      role,
-      isDonor,
-      isReceiver,
-      isAdmin,
-      isVerifiedDonor,
-      hasRole,
-      navigateToLogin,
-      checkAppState
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isAuthenticated,
+        token,
+        isLoadingAuth,
+        isLoadingPublicSettings,
+        authError,
+        appPublicSettings,
+        login,
+        register,
+        verifyOtp,
+        logout,
+        role,
+        isDonor,
+        isReceiver,
+        isAdmin,
+        isVerifiedDonor,
+        hasRole,
+        navigateToLogin,
+        checkAppState,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -147,7 +165,7 @@ export const AuthProvider = ({ children }) => {
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };

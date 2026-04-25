@@ -31,8 +31,13 @@ const storage = multer.diskStorage({
     cb(null, uploadsDir);
   },
   filename: (_req, file, cb) => {
-    const extension = MIME_EXTENSIONS[file.mimetype] || path.extname(file.originalname).toLowerCase();
-    const safeBase = sanitizeBaseName(file.originalname).replace(/\.[^.]+$/, "");
+    const extension =
+      MIME_EXTENSIONS[file.mimetype] ||
+      path.extname(file.originalname).toLowerCase();
+    const safeBase = sanitizeBaseName(file.originalname).replace(
+      /\.[^.]+$/,
+      "",
+    );
     cb(null, `${Date.now()}-${nanoid()}-${safeBase}${extension}`);
   },
 });
@@ -45,6 +50,7 @@ function fileFilter(_req, file, cb) {
   cb(null, true);
 }
 
+/** Single-file upload for legacy verification endpoint */
 export const verificationUpload = multer({
   storage,
   fileFilter,
@@ -53,3 +59,35 @@ export const verificationUpload = multer({
     files: 1,
   },
 });
+
+/** Single-file upload for restaurant document submissions (legacy) */
+export const restaurantDocumentUpload = multer({
+  storage,
+  fileFilter,
+  limits: {
+    fileSize: 5 * 1024 * 1024,
+    files: 1,
+  },
+});
+
+/**
+ * Multi-field upload for the 3 mandatory restaurant registration documents:
+ *   kbis            — Extrait Kbis (max 3 months old)
+ *   hygiene_cert    — Certificat d'hygiène alimentaire
+ *   inspection_cert — Dernier rapport d'inspection sanitaire
+ */
+export const restaurantRegistrationDocuments = multer({
+  storage,
+  fileFilter,
+  limits: {
+    fileSize: 5 * 1024 * 1024,
+    files: 3,
+  },
+}).fields([
+  { name: "kbis", maxCount: 1 },
+  { name: "hygiene_cert", maxCount: 1 },
+  { name: "inspection_cert", maxCount: 1 },
+]);
+
+/** Absolute path of the uploads directory (for path traversal checks) */
+export const UPLOADS_DIR = uploadsDir;

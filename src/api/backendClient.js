@@ -11,8 +11,8 @@ function normalizeApiBaseUrl(value) {
 
 const API_BASE_URL = normalizeApiBaseUrl(
   import.meta.env.VITE_API_URL ||
-  import.meta.env.VITE_BACKEND_API_URL ||
-  import.meta.env.VITE_BASE44_APP_BASE_URL
+    import.meta.env.VITE_BACKEND_API_URL ||
+    import.meta.env.VITE_BASE44_APP_BASE_URL,
 );
 let accessTokenCache = null;
 
@@ -186,7 +186,10 @@ async function requestBlob(path, options = {}) {
   }
 
   const blob = await response.blob();
-  const contentType = response.headers.get("content-type") || blob.type || "application/octet-stream";
+  const contentType =
+    response.headers.get("content-type") ||
+    blob.type ||
+    "application/octet-stream";
   const contentDisposition = response.headers.get("content-disposition") || "";
   const filename = getFilenameFromContentDisposition(contentDisposition);
 
@@ -199,25 +202,85 @@ async function requestBlob(path, options = {}) {
 
 export const backendApi = {
   auth: {
-    register: (payload) => request("/auth/register", { method: "POST", body: payload, retryOnAuth: false }),
-    login: (payload) => request("/auth/login", { method: "POST", body: payload, retryOnAuth: false }),
-    verifyOtp: (payload) => request("/auth/otp/verify", { method: "POST", body: payload, retryOnAuth: false }),
-    resendOtp: (payload) => request("/auth/otp/resend", { method: "POST", body: payload, retryOnAuth: false }),
-    forgotPassword: (payload) => request("/auth/forgot-password", { method: "POST", body: payload, retryOnAuth: false }),
-    resetPassword: (payload) => request("/auth/reset-password", { method: "POST", body: payload, retryOnAuth: false }),
+    register: (payload) =>
+      request("/auth/register", {
+        method: "POST",
+        body: payload,
+        retryOnAuth: false,
+      }),
+    registerRestaurant: (payload) =>
+      request("/auth/register-restaurant", {
+        method: "POST",
+        body: payload,
+        retryOnAuth: false,
+      }),
+    login: (payload) =>
+      request("/auth/login", {
+        method: "POST",
+        body: payload,
+        retryOnAuth: false,
+      }),
+    verifyOtp: (payload) =>
+      request("/auth/otp/verify", {
+        method: "POST",
+        body: payload,
+        retryOnAuth: false,
+      }),
+    resendOtp: (payload) =>
+      request("/auth/otp/resend", {
+        method: "POST",
+        body: payload,
+        retryOnAuth: false,
+      }),
+    forgotPassword: (payload) =>
+      request("/auth/forgot-password", {
+        method: "POST",
+        body: payload,
+        retryOnAuth: false,
+      }),
+    resetPassword: (payload) =>
+      request("/auth/reset-password", {
+        method: "POST",
+        body: payload,
+        retryOnAuth: false,
+      }),
     donorQuizStatus: (token) => request("/auth/donor-quiz/status", { token }),
     submitDonorQuiz: (token, payload) =>
-      request("/auth/donor-quiz/submit", { method: "POST", token, body: payload }),
-    refresh: () => request("/auth/refresh", { method: "POST", retryOnAuth: false }),
-    logout: () => request("/auth/logout", { method: "POST", retryOnAuth: false }),
+      request("/auth/donor-quiz/submit", {
+        method: "POST",
+        token,
+        body: payload,
+      }),
+    refresh: () =>
+      request("/auth/refresh", { method: "POST", retryOnAuth: false }),
+    logout: () =>
+      request("/auth/logout", { method: "POST", retryOnAuth: false }),
     me: (token) => request("/auth/me", { token }),
-    updateMe: (token, payload) => request("/auth/me", { method: "PATCH", token, body: payload }),
+    updateMe: (token, payload) =>
+      request("/auth/me", { method: "PATCH", token, body: payload }),
+  },
+  restaurants: {
+    getMe: (token) => request("/restaurants/me", { token }),
+    uploadDocuments: (formData) =>
+      request("/restaurants/documents", { method: "POST", body: formData }),
+    verifySiren: (token, payload) =>
+      request("/restaurants/verify-siren", {
+        method: "POST",
+        token,
+        body: payload,
+      }),
   },
   messages: {
-    send: (token, payload) => request("/messages", { method: "POST", token, body: payload }),
+    send: (token, payload) =>
+      request("/messages", { method: "POST", token, body: payload }),
     listConversations: (token) => request("/messages/conversations", { token }),
-    listWithPartner: (token, partnerEmail) => request(`/messages/with/${encodeURIComponent(partnerEmail)}`, { token }),
-    markRead: (token, messageId) => request(`/messages/${encodeURIComponent(messageId)}/read`, { method: "PATCH", token }),
+    listWithPartner: (token, partnerEmail) =>
+      request(`/messages/with/${encodeURIComponent(partnerEmail)}`, { token }),
+    markRead: (token, messageId) =>
+      request(`/messages/${encodeURIComponent(messageId)}/read`, {
+        method: "PATCH",
+        token,
+      }),
   },
   meals: {
     list: (filters = {}, sort = "-created_date", limit = 100) => {
@@ -227,21 +290,40 @@ export const backendApi = {
       });
       params.set("sort", sort);
       params.set("limit", String(limit));
-      return request(`/meals?${params.toString()}`).then((d) => (Array.isArray(d?.meals) ? d.meals : []));
+      return request(`/meals?${params.toString()}`).then((d) =>
+        Array.isArray(d?.meals) ? d.meals : [],
+      );
     },
-    getById: (id) => request(`/meals/${encodeURIComponent(id)}`).then((d) => d?.meal || null),
-    create: (token, payload) => request("/meals", { method: "POST", token, body: payload }).then((d) => d?.meal),
-    update: (token, id, payload) => request(`/meals/${encodeURIComponent(id)}`, { method: "PATCH", token, body: payload }).then((d) => d?.meal),
-    remove: (token, id) => request(`/meals/${encodeURIComponent(id)}`, { method: "DELETE", token }),
+    getById: (id) =>
+      request(`/meals/${encodeURIComponent(id)}`).then((d) => d?.meal || null),
+    create: (token, payload) =>
+      request("/meals", { method: "POST", token, body: payload }).then(
+        (d) => d?.meal,
+      ),
+    update: (token, id, payload) =>
+      request(`/meals/${encodeURIComponent(id)}`, {
+        method: "PATCH",
+        token,
+        body: payload,
+      }).then((d) => d?.meal),
+    remove: (token, id) =>
+      request(`/meals/${encodeURIComponent(id)}`, { method: "DELETE", token }),
   },
   reports: {
-    create: (token, payload) => request("/reports", { method: "POST", token, body: payload }).then((d) => d?.report),
+    create: (token, payload) =>
+      request("/reports", { method: "POST", token, body: payload }).then(
+        (d) => d?.report,
+      ),
   },
   verification: {
     upload: (token, file) => {
       const formData = new FormData();
       formData.append("document", file);
-      return request("/verification/upload", { method: "POST", token, body: formData });
+      return request("/verification/upload", {
+        method: "POST",
+        token,
+        body: formData,
+      });
     },
     status: (token) => request("/verification/status", { token }),
   },
@@ -275,7 +357,7 @@ export const backendApi = {
       const query = params.toString();
       return requestBlob(
         `/admin/verifications/${encodeURIComponent(id)}/document${query ? `?${query}` : ""}`,
-        { token }
+        { token },
       );
     },
   },

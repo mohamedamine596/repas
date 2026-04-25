@@ -1,22 +1,37 @@
 export const USER_ROLES = {
-  DONOR: "DONOR",
-  RECEIVER: "RECEIVER",
-  ADMIN: "ADMIN",
+  RESTAURANT: "ROLE_RESTAURANT",
+  RECEIVER: "ROLE_RECEIVER",
+  ADMIN: "ROLE_ADMIN",
+  // Legacy alias kept for db.json backward compatibility
+  DONOR: "ROLE_RESTAURANT",
 };
 
 export const ACCOUNT_STATUS = {
-  EMAIL_PENDING: "email_pending",
-  EMAIL_VERIFIED: "email_verified",
-  QUIZ_PASSED: "quiz_passed",
-  PENDING_ADMIN_REVIEW: "pending_admin_review",
-  ACTIVE: "active",
-  SUSPENDED: "suspended",
+  EMAIL_PENDING: "email_pending", // registered, email OTP not yet verified
+  ACTIVE: "active", // email verified via OTP — full access
+  SUSPENDED: "suspended", // manually suspended by admin
+  SUSPENDED_AUTO: "suspended_auto", // auto-suspended after 3+ reports
+  // Legacy aliases — kept for backward compatibility with old db.json
+  SIREN_VERIFIED: "active",
+  PENDING_ADMIN_REVIEW: "active",
+  APPROVED: "active",
+  PHONE_PENDING: "active",
+  PENDING_REVIEW: "active",
+  EMAIL_VERIFIED: "active",
+  QUIZ_PASSED: "active",
+  REJECTED: "suspended",
+  REVALIDATION_REQUIRED: "active",
 };
 
 export const VERIFICATION_STATUS = {
   PENDING: "PENDING",
   APPROVED: "APPROVED",
   REJECTED: "REJECTED",
+};
+
+export const SIREN_VERIFY_METHOD = {
+  API: "api",
+  DOCUMENT: "document",
 };
 
 export const REFRESH_COOKIE_NAME = "ctp_refresh_token";
@@ -29,7 +44,13 @@ export function isUserRole(value) {
 }
 
 export function isAccountStatus(value) {
-  return Object.values(ACCOUNT_STATUS).includes(value);
+  const canonical = new Set([
+    "email_pending",
+    "active",
+    "suspended",
+    "suspended_auto",
+  ]);
+  return canonical.has(value);
 }
 
 export function isVerificationStatus(value) {

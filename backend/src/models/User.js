@@ -4,18 +4,27 @@ const userSchema = new mongoose.Schema(
   {
     id: { type: String, index: true },
     name: String,
-    email: { type: String, unique: true, index: true },
+    managerName: String,
+    email: { type: String, unique: true, index: true, lowercase: true },
     password: String,
-    role: String,
+    role: {
+      type: String,
+      enum: ["ROLE_RESTAURANT", "ROLE_RECEIVER", "ROLE_ADMIN"],
+    },
     isVerified: Boolean,
-    isEmailVerified: Boolean,
+    isEmailVerified: { type: Boolean, default: false },
+    isPhoneVerified: { type: Boolean, default: false },
     verificationStatus: String,
-    accountStatus: String,
+    accountStatus: {
+      type: String,
+      enum: ["email_pending", "active", "suspended", "suspended_auto"],
+      default: "email_pending",
+    },
     statusHistory: Array,
     bio: String,
     phone: String,
     emailOtp: Object,
-    donorQuiz: Object,
+    phoneOtp: Object,
     passwordReset: Object,
     failedLoginCount: Number,
     lockoutUntil: String,
@@ -27,7 +36,7 @@ const userSchema = new mongoose.Schema(
   },
   {
     timestamps: false,
-  }
+  },
 );
 
 export default mongoose.model("User", userSchema);

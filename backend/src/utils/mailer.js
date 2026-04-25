@@ -39,16 +39,24 @@ function escapeHtml(input) {
     .replaceAll("'", "&#039;");
 }
 
-function renderEmailLayout({ title, subtitle, bodyHtml, ctaLabel, ctaHref, footerNote }) {
+function renderEmailLayout({
+  title,
+  subtitle,
+  bodyHtml,
+  ctaLabel,
+  ctaHref,
+  footerNote,
+}) {
   const safeTitle = escapeHtml(title);
   const safeSubtitle = escapeHtml(subtitle);
   const safeFooterNote = escapeHtml(footerNote || "");
 
-  const ctaBlock = ctaLabel && ctaHref
-    ? `<p style="margin:24px 0 0;">
+  const ctaBlock =
+    ctaLabel && ctaHref
+      ? `<p style="margin:24px 0 0;">
          <a href="${escapeHtml(ctaHref)}" style="display:inline-block;background:#2d6a1f;color:#ffffff;text-decoration:none;padding:12px 20px;border-radius:10px;font-weight:700;">${escapeHtml(ctaLabel)}</a>
        </p>`
-    : "";
+      : "";
 
   return `
   <!doctype html>
@@ -89,6 +97,8 @@ async function deliverMail({ to, subject, text, html }) {
       to,
       subject,
     });
+    console.log("[mailer] Email content (development mode):");
+    console.log(text);
     return { delivered: false, skipped: true };
   }
 
@@ -136,7 +146,8 @@ export async function sendPasswordResetEmail({ to, name, resetUrl }) {
   const safeResetUrl = escapeHtml(resetUrl || "");
   const html = renderEmailLayout({
     title: "Mot de passe oublie",
-    subtitle: "Cliquez sur le lien ci-dessous pour creer un nouveau mot de passe.",
+    subtitle:
+      "Cliquez sur le lien ci-dessous pour creer un nouveau mot de passe.",
     bodyHtml: `
       <p style="margin:0 0 12px;font-size:15px;">Bonjour ${safeName},</p>
       <p style="margin:0 0 14px;font-size:15px;line-height:1.5;">Nous avons recu une demande de reinitialisation pour votre compte.</p>
@@ -160,7 +171,12 @@ export async function sendPasswordResetEmail({ to, name, resetUrl }) {
   return deliverMail({ to, subject, text, html });
 }
 
-export async function sendVerificationDecisionEmail({ to, name, status, reason }) {
+export async function sendVerificationDecisionEmail({
+  to,
+  name,
+  status,
+  reason,
+}) {
   const subject =
     status === "APPROVED"
       ? `${appName()}: verification donneur approuvee`
@@ -189,9 +205,11 @@ export async function sendVerificationDecisionEmail({ to, name, status, reason }
     bodyHtml: `
       <p style="margin:0 0 12px;font-size:15px;">Bonjour ${escapeHtml(name || "donneur")},</p>
       <p style="margin:0 0 14px;font-size:15px;line-height:1.5;">
-        ${status === "APPROVED"
-          ? "Votre verification est completee. Vous pouvez partager des repas des maintenant."
-          : "Votre verification n'a pas pu etre validee actuellement."}
+        ${
+          status === "APPROVED"
+            ? "Votre verification est completee. Vous pouvez partager des repas des maintenant."
+            : "Votre verification n'a pas pu etre validee actuellement."
+        }
       </p>
       ${reason ? `<p style="margin:0;font-size:14px;color:#7a2f2f;">Motif: ${escapeHtml(reason)}</p>` : ""}
     `,
@@ -204,4 +222,65 @@ export async function sendVerificationDecisionEmail({ to, name, status, reason }
     text: textLines.join("\n"),
     html,
   });
+}
+
+export async function sendRestaurantDecisionEmail({
+  to,
+  businessName,
+  status,
+  reason,
+}) {
+  const isApproved = status === "APPROVED" || status === "approved";
+  const subject = isApproved
+    ? `Votre restaurant est maintenant approuve`
+    : `Mise a jour de votre demande d'inscription restaurant`;
+
+  const safeName = escapeHtml(businessName || "Restaurant");
+  const safeReason = reason ? escapeHtml(reason) : "";
+
+  const bodyLines = isApproved
+    ? [
+        "Votre dossier a ete examine et approuve par notre equipe.",
+        "Vous pouvez desormais vous connecter et publier des dons alimentaires.",
+      ]
+    : [
+        "Votre dossier n'a pas pu etre valide pour le moment.",
+        safeReason
+          ? `Motif : ${safeReason}`
+          : "Veuillez nous contacter pour plus d'informations.",
+      ];
+
+  const html = renderEmailLayout({
+    title: isApproved ? "Restaurant approuve !" : "Demande non validee",
+    subtitle: isApproved
+      ? "Bienvenue sur la plateforme."
+      : "Votre demande necessite une correction.",
+    bodyHtml: `
+      <p style="margin:0 0 12px;font-size:15px;">Bonjour ${safeName},</p>
+      ${bodyLines.map((l) => `<p style="margin:0 0 10px;font-size:15px;line-height:1.5;">${l}</p>`).join("")}
+    `,
+    footerNote: "Pour toute question, contactez l'equipe de moderation.",
+  });
+
+  return deliverMail({
+    to,
+    subject,
+    text: `${businessName},\n\n${bodyLines.join("\n")}`,
+    html,
+  });
+}
+
+export async function sendPhoneOtpSms({ phone, code }) {
+  // If a real SMS provider (e.g. Twilio) is configured, send via HTTP.
+  // For now we just log in development so the flow can be tested without credentials.
+  if (process.env.NODE_ENV !== "production") {
+    console.log(`[SMS-OTP] Phone: ${phone}  Code: ${code}`);
+    return { delivered: false, skipped: true, devCode: code };
+  }
+  // Production: integrate your SMS provider here (Twilio, OVH SMS, etc.)
+  // Example (Twilio):
+  //   const client = twilio(process.env.TWILIO_SID, process.env.TWILIO_TOKEN);
+  //   await client.messages.create({ body: `Votre code: ${code}`, from: TWILIO_FROM, to: phone });
+  console.warn("[mailer] SMS provider not configured. Phone OTP not sent.");
+  return { delivered: false, skipped: true };
 }
