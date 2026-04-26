@@ -5,7 +5,7 @@
       "name": "Admin",
       "email": "admin@test.com",
       "password": "$2a$12$qItxHi8sYJzlOQiMLZoJO.kQsUSXEe3zhmVwN7PSSa7LgZRaNwFIW",
-      "role": "ROLE_ADMIN",
+      "role": "ROLE_RECEIVER",
       "isVerified": true,
       "isEmailVerified": true,
       "isPhoneVerified": true,
@@ -21,7 +21,7 @@
       "bio": "",
       "phone": "",
       "createdAt": "2026-04-26T00:37:11.366Z",
-      "updatedAt": "2026-04-26T00:37:11.366Z",
+      "updatedAt": "2026-04-26T23:03:39.929Z",
       "emailOtp": {
         "codeHash": "",
         "expiresAt": null,
@@ -37,6 +37,57 @@
         "attempts": 0,
         "lastSentAt": null,
         "verifiedAt": "2026-04-26T00:37:11.366Z"
+      },
+      "passwordReset": {
+        "tokenHash": "",
+        "expiresAt": null,
+        "requestedAt": null,
+        "usedAt": null
+      },
+      "failedLoginCount": 0,
+      "lockoutUntil": null,
+      "lastFailedLoginAt": null,
+      "suspensionReason": "",
+      "refreshTokens": [],
+      "donorQuiz": null
+    },
+    {
+      "id": "HyrChp2kKBZ7kTAnqTcig",
+      "name": "Base Admin",
+      "email": "admin@coeurtablepartage.com",
+      "password": "$2a$12$MtZlq1hjsK7HaFnSfTXOM.Z2tpODvRJWxk4GL4fgsmSoJU1r5vmk.",
+      "role": "ROLE_ADMIN",
+      "isVerified": true,
+      "isEmailVerified": true,
+      "isPhoneVerified": true,
+      "verificationStatus": "APPROVED",
+      "accountStatus": "active",
+      "statusHistory": [
+        {
+          "status": "active",
+          "at": "2026-04-26T23:03:39.929Z",
+          "reason": ""
+        }
+      ],
+      "bio": "",
+      "phone": "",
+      "createdAt": "2026-04-26T23:03:39.929Z",
+      "updatedAt": "2026-04-26T23:03:39.929Z",
+      "emailOtp": {
+        "codeHash": "",
+        "expiresAt": null,
+        "resendAvailableAt": null,
+        "attempts": 0,
+        "lastSentAt": null,
+        "verifiedAt": "2026-04-26T23:03:39.929Z"
+      },
+      "phoneOtp": {
+        "codeHash": "",
+        "expiresAt": null,
+        "resendAvailableAt": null,
+        "attempts": 0,
+        "lastSentAt": null,
+        "verifiedAt": "2026-04-26T23:03:39.929Z"
       },
       "passwordReset": {
         "tokenHash": "",

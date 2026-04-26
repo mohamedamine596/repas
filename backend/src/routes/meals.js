@@ -9,6 +9,10 @@ import {
 import { validate } from "../middleware/validate.js";
 import { deleteMealById, readDb, writeDb } from "../utils/db.js";
 import { USER_ROLES } from "../constants/auth.js";
+import {
+  sendMealReservedEmailToDonor,
+  sendMealConfirmedEmailToReceiver,
+} from "../utils/mailer.js";
 
 const router = express.Router();
 
@@ -46,6 +50,7 @@ const updateStatusSchema = Joi.object({
   status: Joi.string().valid(
     "available",
     "reserved",
+    "confirmed",
     "collected",
     "delivered",
     "expired",
@@ -268,13 +273,81 @@ router.patch(
     });
 
     await writeDb(db);
+
+    // Notify the donor by email
+    const db2 = await readDb();
+    const donorUser = db2.users.find((u) => u.email === meal.donor_email);
+    const appUrl = process.env.APP_URL || "http://localhost:5173";
+    sendMealReservedEmailToDonor({
+      to: meal.donor_email,
+      donorName: donorUser?.name || meal.donor_name || "donneur",
+      mealTitle: meal.title,
+      receiverName: req.user.name,
+      receiverEmail: req.user.email,
+      deliveryOption: meal.delivery_option,
+      mealUrl: `${appUrl}/MealDetail?id=${meal.id}`,
+    }).catch(() => {}); // non-blocking
+
     return res.json({ meal });
   },
 );
 
 // ---------------------------------------------------------------------------
-// PATCH /meals/:id/collect — receiver marks meal as collected
+// PATCH /meals/:id/confirm — donor confirms a reservation
 // ---------------------------------------------------------------------------
+router.patch(
+  "/:id/confirm",
+  requireAuth,
+  requireApprovedRestaurant,
+  async (req, res) => {
+    const db = await readDb();
+    const meal = db.meals.find((m) => m.id === req.params.id);
+    if (!meal) return res.status(404).json({ error: "Meal not found" });
+
+    const isOwner =
+      meal.donor_email === req.user.email || meal.donorUserId === req.user.id;
+    if (!isOwner) return res.status(403).json({ error: "Not allowed" });
+
+    if (meal.status !== "reserved") {
+      return res
+        .status(409)
+        .json({ error: "Meal must be in reserved status to confirm" });
+    }
+
+    const now = new Date().toISOString();
+    meal.status = "confirmed";
+    meal.confirmed_at = now;
+    meal.updated_date = now;
+
+    if (!Array.isArray(meal.auditLog)) meal.auditLog = [];
+    meal.auditLog.push({
+      action: "confirmed",
+      actorId: req.user.id,
+      actorRole: req.user.role,
+      timestamp: now,
+    });
+
+    await writeDb(db);
+
+    // Notify receiver by email
+    const receiverUser = db.users.find(
+      (u) => u.email === meal.reserved_by_email,
+    );
+    const appUrl = process.env.APP_URL || "http://localhost:5173";
+    sendMealConfirmedEmailToReceiver({
+      to: meal.reserved_by_email,
+      receiverName: receiverUser?.name || meal.reserved_by_name || "receveur",
+      mealTitle: meal.title,
+      donorName: req.user.name,
+      donorEmail: req.user.email,
+      deliveryOption: meal.delivery_option,
+      address: meal.address,
+      mealUrl: `${appUrl}/MealDetail?id=${meal.id}`,
+    }).catch(() => {}); // non-blocking
+
+    return res.json({ meal });
+  },
+);
 router.patch(
   "/:id/collect",
   requireAuth,
@@ -290,9 +363,10 @@ router.patch(
     if (!isReserver)
       return res.status(403).json({ error: "You did not reserve this meal" });
 
-    if (meal.status !== "reserved") {
+    if (meal.status !== "reserved" && meal.status !== "confirmed") {
       return res.status(409).json({
-        error: "Meal must be in reserved status to mark as collected",
+        error:
+          "Meal must be in reserved or confirmed status to mark as collected",
       });
     }
 

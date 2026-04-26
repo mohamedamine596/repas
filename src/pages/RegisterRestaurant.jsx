@@ -1,6 +1,7 @@
 // @ts-nocheck
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useSEO } from "@/hooks/useSEO";
 import { toast } from "sonner";
 import { createPageUrl } from "@/utils";
 import { backendApi } from "@/api/backendClient";
@@ -36,6 +37,11 @@ function validateSiren(value) {
 }
 
 export default function RegisterRestaurant() {
+  useSEO({
+    title: "Inscrire mon restaurant partenaire",
+    description: "Vous avez des surplus alimentaires ? Inscrivez votre restaurant sur Repas Solidaire et contribuez à la lutte contre le gaspillage alimentaire en France.",
+    url: "https://repas-sable.vercel.app/RegisterRestaurant",
+  });
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [sirenChecking, setSirenChecking] = useState(false);

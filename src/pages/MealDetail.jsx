@@ -30,6 +30,8 @@ import {
   ArrowLeft,
   CheckCircle2,
   Loader2,
+  ShieldCheck,
+  PartyPopper,
 } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -74,9 +76,37 @@ export default function MealDetail() {
 
   const reserveMutation = useMutation({
     mutationFn: () => backendApi.meals.reserve(token, mealId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["meal", mealId] });
-      toast.success("Repas réservé ! Contactez le donneur pour les détails.");
+    onSuccess: (updatedMeal) => {
+      if (updatedMeal) queryClient.setQueryData(["meal", mealId], updatedMeal);
+      else queryClient.refetchQueries({ queryKey: ["meal", mealId] });
+      toast.success("Repas réservé ! En attente de confirmation du donneur.");
+    },
+    onError: (err) => {
+      toast.error(err?.data?.error || "Impossible de réserver.");
+    },
+  });
+
+  const confirmMutation = useMutation({
+    mutationFn: () => backendApi.meals.confirm(token, mealId),
+    onSuccess: (updatedMeal) => {
+      if (updatedMeal) queryClient.setQueryData(["meal", mealId], updatedMeal);
+      else queryClient.refetchQueries({ queryKey: ["meal", mealId] });
+      toast.success("Réservation confirmée ! Le receveur a été notifié.");
+    },
+    onError: (err) => {
+      toast.error(err?.data?.error || "Impossible de confirmer.");
+    },
+  });
+
+  const collectMutation = useMutation({
+    mutationFn: () => backendApi.meals.collect(token, mealId),
+    onSuccess: (updatedMeal) => {
+      if (updatedMeal) queryClient.setQueryData(["meal", mealId], updatedMeal);
+      else queryClient.refetchQueries({ queryKey: ["meal", mealId] });
+      toast.success("Repas marqué comme récupéré. Merci !");
+    },
+    onError: (err) => {
+      toast.error(err?.data?.error || "Impossible de marquer comme récupéré.");
     },
   });
 
@@ -136,7 +166,8 @@ export default function MealDetail() {
   }
 
   const isDonor = user.email === meal.donor_email;
-  const isReservedByMe = user.email === meal.reserved_by;
+  const isReservedByMe =
+    user.email === meal.reserved_by_email || user.email === meal.reserved_by;
 
   return (
     <div className="max-w-3xl mx-auto pb-24 md:pb-8 space-y-6">
@@ -196,10 +227,18 @@ export default function MealDetail() {
               <div>
                 <p className="text-xs text-gray-400">Disponibilité</p>
                 <p className="text-sm font-medium">
-                  {meal.available_date
-                    ? format(new Date(meal.available_date), "d MMM, HH:mm", {
-                        locale: fr,
-                      })
+                  {meal.expiresAt || meal.expires_at || meal.available_date
+                    ? format(
+                        new Date(
+                          meal.expiresAt ||
+                            meal.expires_at ||
+                            meal.available_date,
+                        ),
+                        "d MMM, HH:mm",
+                        {
+                          locale: fr,
+                        },
+                      )
                     : "—"}
                 </p>
               </div>
@@ -241,7 +280,35 @@ export default function MealDetail() {
 
       {/* Actions */}
       <div className="space-y-3">
-        {/* Reserve button */}
+        {/* ── RECEIVER: confirmed banner ── */}
+        {!isDonor && meal.status === "confirmed" && (
+          <div className="flex items-start gap-3 bg-emerald-50 border border-emerald-300 rounded-2xl px-4 py-4">
+            <PartyPopper className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+            <div className="space-y-1">
+              <p className="text-sm font-bold text-emerald-900">
+                Votre réservation est confirmée !
+              </p>
+              <p className="text-sm text-emerald-800">
+                {meal.delivery_option === "pickup"
+                  ? `Rendez-vous à l'adresse : ${meal.address}`
+                  : meal.delivery_option === "delivery"
+                    ? "Le donneur va vous livrer. Contactez-le pour l'adresse de livraison."
+                    : "Contactez le donneur pour convenir des modalités."}
+              </p>
+              <p className="text-sm text-emerald-700">
+                Contacter le donneur :{" "}
+                <a
+                  href={`mailto:${meal.donor_email}`}
+                  className="font-semibold underline"
+                >
+                  {meal.donor_email}
+                </a>
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* ── RECEIVER: reserve button ── */}
         {!isDonor && isReceiver && meal.status === "available" && (
           <Button
             className="w-full bg-[#1B5E3B] hover:bg-[#154d30] text-white rounded-xl h-12 text-base"
@@ -259,48 +326,160 @@ export default function MealDetail() {
           </Button>
         )}
 
-        {/* Donor: update status */}
+        {/* ── RECEIVER: already reserved — waiting for donor ── */}
+        {!isDonor && isReservedByMe && meal.status === "reserved" && (
+          <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-2xl px-4 py-4">
+            <ShieldCheck className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-bold text-amber-900">
+                En attente de confirmation
+              </p>
+              <p className="text-sm text-amber-800 mt-0.5">
+                Vous avez réservé ce repas. Le donneur doit confirmer — vous
+                recevrez un email dès que c'est fait.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* ── RECEIVER: collect button (after confirmed) ── */}
+        {!isDonor && isReservedByMe && meal.status === "confirmed" && (
+          <Button
+            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl h-12 text-base"
+            onClick={() => collectMutation.mutate()}
+            disabled={collectMutation.isPending}
+          >
+            {collectMutation.isPending ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <>
+                <CheckCircle2 className="w-5 h-5 mr-2" />
+                Marquer comme récupéré
+              </>
+            )}
+          </Button>
+        )}
+
+        {/* ── DONOR: reservation panel ── */}
         {isDonor && (
           <Card className="border-[#f0e8df]">
             <CardContent className="p-4 space-y-3">
-              <p className="text-sm font-medium text-gray-700">
-                Modifier le statut :
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {[
-                  "available",
-                  "reserved",
-                  "collected",
-                  "delivered",
-                  "expired",
-                ].map((s) => (
+              {meal.status === "reserved" ? (
+                <>
+                  <p className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-amber-500" />
+                    Nouvelle réservation en attente
+                  </p>
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5 space-y-1">
+                    <p className="text-sm text-amber-900">
+                      Réservé par :{" "}
+                      <span className="font-semibold">
+                        {meal.reserved_by_name}
+                      </span>
+                    </p>
+                    <p className="text-sm text-amber-700">
+                      Contact :{" "}
+                      <a
+                        href={`mailto:${meal.reserved_by_email}`}
+                        className="underline"
+                      >
+                        {meal.reserved_by_email}
+                      </a>
+                    </p>
+                  </div>
                   <Button
-                    key={s}
-                    variant={meal.status === s ? "default" : "outline"}
-                    size="sm"
-                    className={
-                      meal.status === s ? "bg-[#1B5E3B] text-white" : ""
-                    }
-                    onClick={() => updateStatusMutation.mutate(s)}
+                    className="w-full bg-[#1B5E3B] hover:bg-[#154d30] text-white rounded-xl"
+                    onClick={() => confirmMutation.mutate()}
+                    disabled={confirmMutation.isPending}
+                  >
+                    {confirmMutation.isPending ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <>
+                        <CheckCircle2 className="w-4 h-4 mr-2" />
+                        Confirmer la réservation
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full rounded-xl text-red-500 border-red-200 hover:bg-red-50"
+                    onClick={() => updateStatusMutation.mutate("available")}
                     disabled={updateStatusMutation.isPending}
                   >
-                    {s === "available"
-                      ? "Disponible"
-                      : s === "reserved"
-                        ? "Réservé"
-                        : s === "collected"
-                          ? "Récupéré"
-                          : s === "delivered"
-                            ? "Livré"
-                            : "Expiré"}
+                    Annuler et remettre disponible
                   </Button>
-                ))}
-              </div>
-              {meal.reserved_by_name && (
-                <p className="text-sm text-gray-500">
-                  Réservé par :{" "}
-                  <span className="font-medium">{meal.reserved_by_name}</span>
-                </p>
+                </>
+              ) : meal.status === "confirmed" ? (
+                <>
+                  <p className="text-sm font-semibold text-emerald-700 flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4" />
+                    Réservation confirmée
+                  </p>
+                  <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2.5 space-y-1">
+                    <p className="text-sm text-emerald-900">
+                      Receveur :{" "}
+                      <span className="font-semibold">
+                        {meal.reserved_by_name}
+                      </span>
+                    </p>
+                    <p className="text-sm text-emerald-700">
+                      Contact :{" "}
+                      <a
+                        href={`mailto:${meal.reserved_by_email}`}
+                        className="underline"
+                      >
+                        {meal.reserved_by_email}
+                      </a>
+                    </p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    className="w-full rounded-xl"
+                    onClick={() => updateStatusMutation.mutate("delivered")}
+                    disabled={updateStatusMutation.isPending}
+                  >
+                    Marquer comme livré
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm font-medium text-gray-700">
+                    Modifier le statut :
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {["available", "collected", "delivered", "expired"].map(
+                      (s) => (
+                        <Button
+                          key={s}
+                          variant={meal.status === s ? "default" : "outline"}
+                          size="sm"
+                          className={
+                            meal.status === s ? "bg-[#1B5E3B] text-white" : ""
+                          }
+                          onClick={() => updateStatusMutation.mutate(s)}
+                          disabled={updateStatusMutation.isPending}
+                        >
+                          {s === "available"
+                            ? "Disponible"
+                            : s === "collected"
+                              ? "Récupéré"
+                              : s === "delivered"
+                                ? "Livré"
+                                : "Expiré"}
+                        </Button>
+                      ),
+                    )}
+                  </div>
+                  {meal.reserved_by_name && (
+                    <p className="text-sm text-gray-500">
+                      Réservé par :{" "}
+                      <span className="font-medium">
+                        {meal.reserved_by_name}
+                      </span>
+                    </p>
+                  )}
+                </>
               )}
             </CardContent>
           </Card>

@@ -331,6 +331,11 @@ export const backendApi = {
         method: "PATCH",
         token,
       }).then((d) => d?.meal),
+    confirm: (token, id) =>
+      request(`/meals/${encodeURIComponent(id)}/confirm`, {
+        method: "PATCH",
+        token,
+      }).then((d) => d?.meal),
     collect: (token, id) =>
       request(`/meals/${encodeURIComponent(id)}/collect`, {
         method: "PATCH",
@@ -390,5 +395,16 @@ export const backendApi = {
         { token },
       );
     },
+    suspendUser: (token, id, reason) =>
+      request(`/admin/users/${encodeURIComponent(id)}/suspend`, {
+        method: "POST",
+        token,
+        body: { reason },
+      }),
+    unsuspendUser: (token, id) =>
+      request(`/admin/users/${encodeURIComponent(id)}/unsuspend`, {
+        method: "POST",
+        token,
+      }),
   },
 };

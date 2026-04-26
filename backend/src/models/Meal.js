@@ -29,6 +29,7 @@ const mealSchema = new mongoose.Schema(
       enum: [
         "available",
         "reserved",
+        "confirmed",
         "collected",
         "delivered",
         "expired",
@@ -47,6 +48,8 @@ const mealSchema = new mongoose.Schema(
     reservedByName: String,
     reserved_by_name: String,
     reservedAt: String,
+    confirmedAt: String,
+    confirmed_at: String,
     collectedAt: String,
 
     auditLog: Array,

@@ -1,0 +1,31 @@
+User-agent: *
+Allow: /
+Allow: /Home
+Allow: /MealsList
+Allow: /MealMap
+Allow: /About
+Allow: /Login
+Allow: /RegisterRestaurant
+
+# Block private / authenticated pages
+Disallow: /Dashboard
+Disallow: /Profile
+Disallow: /Messages
+Disallow: /Conversation
+Disallow: /PublishMeal
+Disallow: /MealHistory
+Disallow: /DonorQuiz
+Disallow: /DonorDocumentUpload
+Disallow: /DonorPendingReview
+Disallow: /RestaurantDocumentUpload
+Disallow: /RestaurantPendingReview
+Disallow: /AdminVerifications
+Disallow: /admin/
+Disallow: /auth/
+Disallow: /OtpVerification
+Disallow: /ResetPassword
+
+# Block API
+Disallow: /api/
+
+Sitemap: https://repas-sable.vercel.app/sitemap.xml

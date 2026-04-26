@@ -1,11 +1,101 @@
 <!doctype html>
-<html lang="en">
+<html lang="fr">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="https://base44.com/logo_v2.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Primary SEO -->
+    <title>Repas Solidaire — Donnez ou trouvez des repas gratuits près de chez vous</title>
+    <meta name="description" content="Repas Solidaire est la plateforme gratuite de partage de repas en France. Donnez vos surplus alimentaires ou trouvez des repas offerts près de chez vous. Rejoignez la communauté Solidarité Sans Frontières." />
+    <meta name="keywords" content="repas solidaire, partage repas, don alimentaire, repas gratuit, solidarité alimentaire, anti-gaspillage, don repas France, surplus alimentaire, aide alimentaire" />
+    <meta name="author" content="Solidarité Sans Frontières" />
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+    <link rel="canonical" href="https://repas-sable.vercel.app/" />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://repas-sable.vercel.app/" />
+    <meta property="og:site_name" content="Repas Solidaire" />
+    <meta property="og:title" content="Repas Solidaire — Partagez des repas, changez des vies" />
+    <meta property="og:description" content="Donnez vos repas en surplus ou trouvez de l'aide alimentaire près de chez vous. Plateforme gratuite et sécurisée par Solidarité Sans Frontières." />
+    <meta property="og:image" content="https://repas-sable.vercel.app/og-image.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Repas Solidaire — Plateforme de partage de repas" />
+    <meta property="og:locale" content="fr_FR" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Repas Solidaire — Donnez ou trouvez des repas gratuits" />
+    <meta name="twitter:description" content="Donnez vos repas en surplus ou trouvez de l'aide alimentaire près de chez vous. Plateforme gratuite et sécurisée." />
+    <meta name="twitter:image" content="https://repas-sable.vercel.app/og-image.jpg" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+
+    <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json" />
-    <title>Base44 APP</title>
+    <meta name="theme-color" content="#1B5E3B" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Repas Solidaire" />
+
+    <!-- Geo targeting (France) -->
+    <meta name="geo.region" content="FR" />
+    <meta name="geo.placename" content="France" />
+    <meta name="language" content="French" />
+
+    <!-- Preconnect for performance (helps Core Web Vitals) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="dns-prefetch" href="https://qtrypzzcjebvfcihiynt.supabase.co" />
+
+    <!-- JSON-LD: Organization structured data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Solidarité Sans Frontières",
+      "alternateName": "Repas Solidaire",
+      "url": "https://repas-sable.vercel.app",
+      "logo": "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69b033390db1712a51a56d65/4d38fd5d2_generated_image.png",
+      "description": "Plateforme de partage de repas solidaires en France. Connectez donateurs et bénéficiaires pour lutter contre le gaspillage alimentaire.",
+      "sameAs": [],
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "contactType": "customer support",
+        "availableLanguage": "French"
+      }
+    }
+    </script>
+
+    <!-- JSON-LD: WebSite with Sitelinks Search -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Repas Solidaire",
+      "url": "https://repas-sable.vercel.app",
+      "description": "Donnez ou trouvez des repas gratuits près de chez vous",
+      "inLanguage": "fr-FR",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "https://repas-sable.vercel.app/MealsList?search={search_term_string}"
+        },
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>

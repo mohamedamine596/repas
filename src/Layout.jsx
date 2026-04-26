@@ -81,26 +81,30 @@ export default function Layout({ children, currentPageName }) {
   }
 
   return (
-    <div className="min-h-screen bg-[#FFF8F0]">
+    <div className="min-h-screen bg-[#FFF8F0] font-sans">
       {/* Top nav */}
       <header
-        className="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-[#f0e8df]"
+        className="sticky top-0 z-50 bg-stone-50 border-b border-stone-200 shadow-sm shadow-emerald-900/5"
         style={{ paddingTop: "env(safe-area-inset-top)" }}
       >
-        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-1">
+        <div className="max-w-7xl mx-auto px-8 h-16 flex items-center justify-between">
+          {/* Logo */}
+          <div className="flex items-center gap-2">
             {canGoBack && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="select-none mr-1 text-gray-500 hover:text-[#1B5E3B]"
+              <button
+                className="p-1.5 rounded-full text-stone-500 hover:text-emerald-800 hover:bg-emerald-50 transition-colors mr-1"
                 onClick={() => navigate(-1)}
               >
                 <ChevronLeft className="w-5 h-5" />
-              </Button>
+              </button>
             )}
-            <Link to={createPageUrl("Home")} className="flex items-center gap-2">
-              <AppLogo size="sm" showText={true} showTagline={true} />
+            <Link to={createPageUrl("Home")} className="flex items-center gap-2 select-none">
+              <div className="w-8 h-8 rounded-xl bg-[#1b5e3b] flex items-center justify-center">
+                <span className="text-white text-sm font-bold">R</span>
+              </div>
+              <span className="text-xl font-bold text-emerald-900 tracking-tight hidden sm:block">
+                Repas Solidaire
+              </span>
             </Link>
           </div>
 
@@ -115,11 +119,10 @@ export default function Layout({ children, currentPageName }) {
                   to={createPageUrl(item.page)}
                   className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all select-none
                     ${isActive
-                      ? "bg-[#1B5E3B] text-white"
-                      : "text-gray-600 hover:bg-[#f5efe8] hover:text-[#1B5E3B]"
+                      ? "text-emerald-900 border-b-2 border-emerald-900 rounded-none pb-1"
+                      : "text-stone-500 hover:text-emerald-800 hover:bg-emerald-50/50"
                     }`}
                 >
-                  <Icon className="w-4 h-4" />
                   {item.name}
                 </Link>
               );
@@ -130,36 +133,31 @@ export default function Layout({ children, currentPageName }) {
             {user && (
               <Link
                 to={createPageUrl("Profile")}
-                className="hidden md:flex items-center gap-2 text-sm text-gray-600 hover:text-[#1B5E3B] transition-colors"
+                className="hidden md:flex items-center gap-2 text-sm text-stone-600 hover:text-emerald-800 transition-colors"
               >
-                <div className="w-8 h-8 rounded-full bg-[#1B5E3B]/10 flex items-center justify-center">
-                  <User className="w-4 h-4 text-[#1B5E3B]" />
+                <div className="w-9 h-9 rounded-full bg-[#1b5e3b]/10 flex items-center justify-center text-[#1b5e3b] font-bold text-sm">
+                  {(user.name || user.fullName || "U").charAt(0).toUpperCase()}
                 </div>
-                <span className="font-medium">{(user.name || user.fullName)?.split(' ')[0]}</span>
               </Link>
             )}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="hidden md:flex text-gray-500 hover:text-red-500"
+            <button
+              className="hidden md:flex items-center gap-1 text-stone-400 hover:text-red-500 transition-colors text-sm"
               onClick={handleLogout}
             >
               <LogOut className="w-4 h-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="md:hidden"
+            </button>
+            <button
+              className="md:hidden p-2 rounded-full text-stone-500 hover:bg-stone-100"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </Button>
+            </button>
           </div>
         </div>
 
-        {/* Mobile menu */}
+        {/* Mobile dropdown menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden bg-white border-t border-[#f0e8df] px-4 py-4 space-y-1 animate-in slide-in-from-top-2">
+          <div className="md:hidden bg-stone-50 border-t border-stone-200 px-4 py-3 space-y-1">
             {visibleNavItems.map((item) => {
               const Icon = item.icon;
               const isActive = currentPageName === item.page;
@@ -168,10 +166,10 @@ export default function Layout({ children, currentPageName }) {
                   key={item.page}
                   to={createPageUrl(item.page)}
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all select-none
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all select-none
                     ${isActive
-                      ? "bg-[#1B5E3B] text-white"
-                      : "text-gray-600 hover:bg-[#f5efe8]"
+                      ? "bg-[#1b5e3b] text-white"
+                      : "text-stone-600 hover:bg-emerald-50 hover:text-emerald-800"
                     }`}
                 >
                   <Icon className="w-5 h-5" />
@@ -182,14 +180,14 @@ export default function Layout({ children, currentPageName }) {
             <Link
               to={createPageUrl("Profile")}
               onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-[#f5efe8]"
+              className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-stone-600 hover:bg-emerald-50"
             >
               <User className="w-5 h-5" />
               Mon Profil
             </Link>
             <button
               onClick={handleLogout}
-              className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-red-500 hover:bg-red-50 w-full"
+              className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-red-500 hover:bg-red-50 w-full"
             >
               <LogOut className="w-5 h-5" />
               Déconnexion
@@ -198,13 +196,13 @@ export default function Layout({ children, currentPageName }) {
         )}
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 py-6 overflow-hidden">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 overflow-hidden">
         <AnimatePresence mode="wait">
           <motion.div
             key={location.pathname}
-            initial={{ opacity: 0, x: 18 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -18 }}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.18, ease: "easeInOut" }}
           >
             {children}
@@ -214,10 +212,10 @@ export default function Layout({ children, currentPageName }) {
 
       {/* Mobile bottom nav */}
       <nav
-        className="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-lg border-t border-[#f0e8df] z-50"
+        className="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-stone-100 shadow-[0_-4px_20px_rgba(27,94,59,0.06)] z-50 rounded-t-3xl"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
-        <div className="flex items-center justify-around py-2">
+        <div className="flex items-center justify-around px-4 pt-2 pb-4">
           {mobileBottomItems.map((item) => {
             const Icon = item.icon;
             const isActive = currentPageName === item.page;
@@ -225,11 +223,14 @@ export default function Layout({ children, currentPageName }) {
               <Link
                 key={item.page}
                 to={createPageUrl(item.page)}
-                className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg transition-all select-none
-                  ${isActive ? "text-[#1B5E3B]" : "text-gray-400"}`}
+                className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-2xl transition-all select-none
+                  ${isActive
+                    ? "bg-emerald-100 text-emerald-900"
+                    : "text-stone-400 hover:text-emerald-700"
+                  }`}
               >
                 <Icon className="w-5 h-5" />
-                <span className="text-[10px] font-medium">{item.name}</span>
+                <span className="text-[10px] font-semibold">{item.name}</span>
               </Link>
             );
           })}

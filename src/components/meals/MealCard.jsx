@@ -1,8 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Badge } from "@/components/ui/badge";
-import { MapPin, Clock, Truck, Package, ArrowRight } from "lucide-react";
+import { MapPin, Clock, Truck, ArrowRight } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
@@ -29,6 +28,7 @@ const FOOD_EMOJIS = {
 const STATUS_STYLES = {
   available: "bg-emerald-100 text-emerald-700",
   reserved: "bg-amber-100 text-amber-700",
+  confirmed: "bg-emerald-200 text-emerald-800",
   collected: "bg-blue-100 text-blue-700",
   delivered: "bg-purple-100 text-purple-700",
   expired: "bg-gray-100 text-gray-500",
@@ -37,6 +37,7 @@ const STATUS_STYLES = {
 const STATUS_LABELS = {
   available: "Disponible",
   reserved: "Réservé",
+  confirmed: "Confirmé",
   collected: "Récupéré",
   delivered: "Livré",
   expired: "Expiré",
@@ -46,66 +47,88 @@ export default function MealCard({ meal, distance }) {
   return (
     <Link
       to={createPageUrl("MealDetail") + `?id=${meal.id}`}
-      className="group block bg-white rounded-2xl border border-[#f0e8df] overflow-hidden hover:shadow-lg hover:shadow-[#1B5E3B]/5 transition-all duration-300 hover:-translate-y-1"
+      className="group block bg-white rounded-2xl overflow-hidden border border-stone-100 hover:shadow-xl hover:shadow-emerald-900/8 hover:-translate-y-1 transition-all duration-300"
     >
       {/* Image / Placeholder */}
-      <div className="relative h-44 bg-gradient-to-br from-[#1B5E3B]/5 to-[#E8634A]/5 flex items-center justify-center overflow-hidden">
+      <div className="relative h-48 bg-gradient-to-br from-emerald-50 to-stone-100 flex items-center justify-center overflow-hidden">
         {meal.photo_url ? (
-          <img src={meal.photo_url} alt={meal.title} className="w-full h-full object-cover" />
+          <img
+            src={meal.photo_url}
+            alt={meal.title}
+            className="w-full h-full object-cover"
+          />
         ) : (
-          <span className="text-5xl">{FOOD_EMOJIS[meal.food_type] || "🍽️"}</span>
+          <span className="text-6xl opacity-70">
+            {FOOD_EMOJIS[meal.food_type] || "🍽️"}
+          </span>
         )}
-        <Badge className={`absolute top-3 right-3 ${STATUS_STYLES[meal.status]} border-0 font-medium`}>
+        {/* Portions badge */}
+        <span className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-[#1b5e3b] text-white text-[10px] font-bold uppercase tracking-wide shadow-sm">
+          {meal.quantity || "?"}
+        </span>
+        {/* Status / expiry badge */}
+        <span
+          className={`absolute top-3 right-3 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide shadow-sm ${STATUS_STYLES[meal.status]}`}
+        >
           {STATUS_LABELS[meal.status]}
-        </Badge>
+        </span>
       </div>
 
-      <div className="p-4 space-y-3">
-        <div>
-          <p className="text-xs font-medium text-[#E8634A] uppercase tracking-wide">
-            {FOOD_LABELS[meal.food_type]}
-          </p>
-          <h3 className="text-base font-semibold text-gray-900 mt-1 group-hover:text-[#1B5E3B] transition-colors line-clamp-1">
-            {meal.title}
-          </h3>
-          <p className="text-sm text-gray-500 mt-1 line-clamp-2">{meal.description}</p>
-        </div>
+      <div className="p-4">
+        {/* Food type label */}
+        <p className="text-[10px] font-bold uppercase tracking-widest text-[#813e44] mb-1">
+          {FOOD_EMOJIS[meal.food_type]} {FOOD_LABELS[meal.food_type] || "Repas"}
+        </p>
+        <h3 className="font-bold text-[#191c19] text-sm leading-snug line-clamp-1 group-hover:text-[#1b5e3b] transition-colors">
+          {meal.title}
+        </h3>
+        <p className="text-xs text-stone-400 mt-1 line-clamp-2 leading-relaxed">
+          {meal.description}
+        </p>
 
-        <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500">
+        {/* Meta row */}
+        <div className="flex items-center gap-3 mt-3 text-xs text-stone-400">
           <span className="flex items-center gap-1">
-            <Clock className="w-3.5 h-3.5" />
-            {meal.available_date
-              ? format(new Date(meal.available_date), "d MMM, HH:mm", { locale: fr })
+            <Clock className="w-3 h-3" />
+            {meal.expiresAt || meal.expires_at || meal.available_date
+              ? format(
+                  new Date(
+                    meal.expiresAt || meal.expires_at || meal.available_date,
+                  ),
+                  "d MMM, HH:mm",
+                  { locale: fr },
+                )
               : "—"}
           </span>
           <span className="flex items-center gap-1">
-            <Package className="w-3.5 h-3.5" />
-            {meal.quantity}
-          </span>
-          <span className="flex items-center gap-1">
             {meal.delivery_option === "delivery" ? (
-              <Truck className="w-3.5 h-3.5" />
+              <Truck className="w-3 h-3" />
             ) : (
-              <MapPin className="w-3.5 h-3.5" />
+              <MapPin className="w-3 h-3" />
             )}
             {meal.delivery_option === "pickup"
               ? "À récupérer"
               : meal.delivery_option === "delivery"
-              ? "Livraison"
-              : "Les deux"}
+                ? "Livraison"
+                : "Les deux"}
           </span>
         </div>
 
-        <div className="flex items-center justify-between pt-2 border-t border-[#f5efe8]">
-          <div className="flex items-center gap-1 text-xs text-gray-400">
+        {/* Location / distance */}
+        <div className="flex items-center justify-between mt-3 pt-3 border-t border-stone-100">
+          <div className="flex items-center gap-1 text-xs text-stone-400">
             <MapPin className="w-3 h-3" />
             {distance != null ? (
-              <span>{distance < 1 ? `${Math.round(distance * 1000)}m` : `${distance.toFixed(1)}km`}</span>
+              <span className="font-medium text-emerald-700">
+                {distance < 1
+                  ? `${Math.round(distance * 1000)}m`
+                  : `${distance.toFixed(1)}km`}
+              </span>
             ) : (
               <span className="truncate max-w-[140px]">{meal.address}</span>
             )}
           </div>
-          <span className="text-xs font-medium text-[#1B5E3B] flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <span className="text-xs font-semibold text-[#1b5e3b] flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
             Voir <ArrowRight className="w-3 h-3" />
           </span>
         </div>

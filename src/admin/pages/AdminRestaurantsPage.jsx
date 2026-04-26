@@ -3,13 +3,14 @@
  * Liste des restaurants partenaires avec filtres, recherche et détails
  * Affiche les signalements avec code couleur (orange/rouge)
  */
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Search, Download, AlertTriangle } from "lucide-react";
 import {
-  MOCK_RESTAURANTS,
   formatDateFrench,
   generateInitials,
 } from "../mockDataFrench";
+import { backendApi } from "@/api/backendClient";
+import { useAuth } from "@/lib/AuthContext";
 
 function StatusBadge({ status }) {
   const styles = {
@@ -69,9 +70,33 @@ function ReportCountBadge({ count, openCount }) {
 export default function AdminRestaurantsPage() {
   const [filterStatus, setFilterStatus] = useState("tous");
   const [searchQuery, setSearchQuery] = useState("");
+  const { token } = useAuth();
+  const [restaurants, setRestaurants] = useState([]);
 
-  // TODO: Replace with GET /api/admin/restaurants
-  const restaurants = MOCK_RESTAURANTS;
+  useEffect(() => {
+    if (!token) return;
+    backendApi.admin
+      .listUsers(token, { role: "ROLE_RESTAURANT" })
+      .then((data) => {
+        const users = data?.users || [];
+        if (users.length === 0) return;
+        setRestaurants(
+          users.map((u) => ({
+            id: u.id,
+            nom: u.name || u.fullName || u.email,
+            email: u.email,
+            ville: u.city || "",
+            telephone: u.phone || "",
+            siren: u.siren || "",
+            dateInscription: u.createdAt,
+            accountStatus: u.accountStatus,
+            totalReports: 0,
+            openReports: 0,
+          }))
+        );
+      })
+      .catch(() => {});
+  }, [token]);
 
   // Filtered restaurants
   const filteredRestaurants = useMemo(() => {

@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { useSEO } from "@/hooks/useSEO";
 import { createPageUrl } from "@/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -32,6 +33,11 @@ const values = [
 ];
 
 export default function About() {
+  useSEO({
+    title: "À propos — Solidarité Sans Frontières",
+    description: "Découvrez Solidarité Sans Frontières et notre mission de lutter contre la faim et le gaspillage alimentaire en France grâce à la plateforme Repas Solidaire.",
+    url: "https://repas-sable.vercel.app/About",
+  });
   return (
     <div className="max-w-3xl mx-auto space-y-10 pb-24 md:pb-10">
       {/* Hero block */}

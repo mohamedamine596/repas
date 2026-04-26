@@ -14,6 +14,7 @@ import { AuthProvider, useAuth } from "@/lib/AuthContext";
 import UserNotRegisteredError from "@/components/UserNotRegisteredError";
 import { createPageUrl } from "@/utils";
 import AdminModule from "@/admin/AdminModule";
+import GoogleOAuthCallback from "@/pages/GoogleOAuthCallback";
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -28,6 +29,7 @@ const PUBLIC_PAGES = new Set([
   "ForgotPassword",
   "ResetPassword",
   "RegisterRestaurant",
+  "GoogleOAuthCallback",
 ]);
 const PAGE_ROLE_GUARDS = {
   PublishMeal: ["ROLE_RESTAURANT"],
@@ -109,6 +111,10 @@ const AuthenticatedApp = () => {
         path="/donneur/dashboard"
         element={<GuardedPage pageName="Dashboard" Page={Pages.Dashboard} />}
       />
+      <Route
+        path="/restaurant/dashboard"
+        element={<GuardedPage pageName="Dashboard" Page={Pages.Dashboard} />}
+      />
       {Object.entries(Pages).map(([path, Page]) => (
         <Route
           key={path}
@@ -116,6 +122,7 @@ const AuthenticatedApp = () => {
           element={<GuardedPage pageName={path} Page={Page} />}
         />
       ))}
+      <Route path="/auth/google/callback" element={<GoogleOAuthCallback />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );

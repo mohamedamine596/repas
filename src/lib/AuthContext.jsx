@@ -119,7 +119,7 @@ export const AuthProvider = ({ children }) => {
   const isDonor = role === "DONOR" || role === "ROLE_RESTAURANT";
   const isReceiver = role === "RECEIVER" || role === "ROLE_RECEIVER";
   const isAdmin = role === "ADMIN" || role === "ROLE_ADMIN";
-  const isVerifiedDonor = isDonor && user?.accountStatus === "active";
+  const isVerifiedDonor = isDonor;
   // hasRole accepts both canonical (ROLE_RESTAURANT) and legacy (DONOR) names
   const hasRole = (...roles) => {
     const aliases = {

@@ -1,5 +1,7 @@
-import React, { createContext, useCallback, useContext, useMemo, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { buildInitialAdminState } from "./mockData";
+import { backendApi } from "@/api/backendClient";
+import { useAuth } from "@/lib/AuthContext";
 
 const AdminContext = createContext(null);
 
@@ -11,6 +13,7 @@ const makeActivityEvent = (message) => ({
 
 export function AdminProvider({ children }) {
   const initial = useMemo(() => buildInitialAdminState(), []);
+  const { token } = useAuth();
 
   const [donors, setDonors] = useState(initial.donors);
   const [receivers, setReceivers] = useState(initial.receivers);
@@ -21,6 +24,71 @@ export function AdminProvider({ children }) {
   const [rules, setRules] = useState(initial.rules);
   const [emailTemplates, setEmailTemplates] = useState(initial.emailTemplates);
   const [activityFeed, setActivityFeed] = useState(initial.activityFeed);
+
+  // ── Load real users from backend ─────────────────────────────────────────
+  useEffect(() => {
+    if (!token) return;
+
+    // Map API accountStatus → admin status label
+    function mapStatus(accountStatus) {
+      if (accountStatus === "active") return "actif";
+      if (accountStatus === "suspended" || accountStatus === "suspended_auto") return "suspendu";
+      if (accountStatus === "email_pending") return "en_attente";
+      return "en_attente";
+    }
+
+    // Fetch receivers (ROLE_RECEIVER)
+    backendApi.admin
+      .listUsers(token, { role: "ROLE_RECEIVER" })
+      .then((data) => {
+        const users = data?.users || [];
+        if (users.length === 0) return;
+        setReceivers(
+          users.map((u) => ({
+            id: u.id,
+            name: u.name || u.fullName || u.email,
+            email: u.email,
+            city: u.city || "",
+            phone: u.phone || "",
+            bio: u.bio || "",
+            status: mapStatus(u.accountStatus),
+            suspensionReason: u.suspensionReason || "",
+            registeredAt: u.createdAt,
+            reports: 0,
+          }))
+        );
+      })
+      .catch(() => {
+        // Keep mock data on error
+      });
+
+    // Fetch restaurant/donor users (ROLE_RESTAURANT)
+    backendApi.admin
+      .listUsers(token, { role: "ROLE_RESTAURANT" })
+      .then((data) => {
+        const users = data?.users || [];
+        if (users.length === 0) return;
+        setDonors(
+          users.map((u) => ({
+            id: u.id,
+            name: u.name || u.fullName || u.email,
+            email: u.email,
+            city: u.city || "",
+            phone: u.phone || "",
+            status: mapStatus(u.accountStatus),
+            suspensionReason: u.suspensionReason || "",
+            registeredAt: u.createdAt,
+            quizScore: null,
+            wrongAnswers: [],
+            photoUrl: null,
+            idPhotoUrl: null,
+          }))
+        );
+      })
+      .catch(() => {
+        // Keep mock data on error
+      });
+  }, [token]);
 
   // Replace this helper with real API tracking/event logging when backend endpoints are ready.
   const pushActivity = useCallback((message) => {

@@ -620,6 +620,57 @@ router.get(
 );
 
 // ---------------------------------------------------------------------------
+// POST /admin/users/:id/suspend — suspend any user account
+// ---------------------------------------------------------------------------
+router.post(
+  "/users/:id/suspend",
+  requireAuth,
+  requireRole(USER_ROLES.ADMIN),
+  validate(suspendSchema),
+  async (req, res) => {
+    const db = await readDb();
+    const user = db.users.find((u) => u.id === req.params.id);
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    const now = new Date().toISOString();
+    user.accountStatus = "suspended";
+    user.suspensionReason = req.body.reason;
+    if (!Array.isArray(user.statusHistory)) user.statusHistory = [];
+    user.statusHistory.push({ status: "suspended", at: now, reason: req.body.reason });
+    user.updatedAt = now;
+
+    addAuditLog(db, "user_suspended", req.user.id, req.user.role, user.id, "user", req.ip, { reason: req.body.reason });
+    await writeDb(db);
+    return res.json({ user: publicUser(user) });
+  },
+);
+
+// ---------------------------------------------------------------------------
+// POST /admin/users/:id/unsuspend — reactivate a suspended user account
+// ---------------------------------------------------------------------------
+router.post(
+  "/users/:id/unsuspend",
+  requireAuth,
+  requireRole(USER_ROLES.ADMIN),
+  async (req, res) => {
+    const db = await readDb();
+    const user = db.users.find((u) => u.id === req.params.id);
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    const now = new Date().toISOString();
+    user.accountStatus = "active";
+    user.suspensionReason = "";
+    if (!Array.isArray(user.statusHistory)) user.statusHistory = [];
+    user.statusHistory.push({ status: "active", at: now, reason: "admin_unsuspended" });
+    user.updatedAt = now;
+
+    addAuditLog(db, "user_unsuspended", req.user.id, req.user.role, user.id, "user", req.ip, {});
+    await writeDb(db);
+    return res.json({ user: publicUser(user) });
+  },
+);
+
+// ---------------------------------------------------------------------------
 // POST /admin/reports/:id/resolve — admin resolves a report
 // ---------------------------------------------------------------------------
 router.post(

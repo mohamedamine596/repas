@@ -53,6 +53,11 @@ export default function Dashboard() {
     enabled: !!user?.email && isDonor,
   });
 
+  // Donor: meals that have been reserved but not yet confirmed
+  const pendingDonorReservations = myMeals.filter(
+    (m) => m.status === "reserved",
+  );
+
   const { data: myReservations = [] } = useQuery({
     queryKey: ["myReservations", user?.email],
     queryFn: async () => {
@@ -170,130 +175,168 @@ export default function Dashboard() {
 
   return (
     <PullToRefresh onRefresh={handleRefresh}>
-      <div className="space-y-8 pb-24 md:pb-8">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div className="space-y-7 pb-24 md:pb-8">
+        {/* ── Greeting bar ──────────────────────────────────────────── */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-gradient-to-r from-[#004527] to-[#1b5e3b] rounded-3xl px-6 py-5 text-white">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              Bonjour, {(user.name || user.fullName)?.split(" ")[0] || "ami"} 👋
+            <p className="text-white/60 text-xs uppercase tracking-widest font-semibold mb-1">
+              Tableau de bord
+            </p>
+            <h1 className="text-xl font-extrabold">
+              Bonjour, {user.name || user.fullName || "ami"} 👋
             </h1>
-            <p className="text-gray-500 mt-1">
+            <p className="text-white/60 text-sm mt-0.5">
               Voici un aperçu de votre activité solidaire
             </p>
           </div>
           {isAdmin ? (
             <Link to={createPageUrl("AdminVerifications")}>
-              <Button className="bg-[#1B5E3B] hover:bg-[#154d30] text-white rounded-xl">
-                <ShieldCheck className="w-4 h-4 mr-2" />
-                Gerer les verifications
-              </Button>
+              <button className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white/15 hover:bg-white/25 text-white text-sm font-semibold transition-colors backdrop-blur-sm">
+                <ShieldCheck className="w-4 h-4" />
+                Gérer les vérifications
+              </button>
             </Link>
           ) : isDonor ? (
             isVerifiedDonor ? (
               <Link to={createPageUrl("PublishMeal")}>
-                <Button className="bg-[#E8634A] hover:bg-[#d4553e] text-white rounded-xl">
-                  <PlusCircle className="w-4 h-4 mr-2" />
+                <button className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-[#aef2c4] hover:bg-[#92d5a9] text-[#002110] text-sm font-bold transition-colors">
+                  <PlusCircle className="w-4 h-4" />
                   Publier un repas
-                </Button>
+                </button>
               </Link>
             ) : (
               <Link to={donorActionLink}>
-                <Button className="bg-amber-600 hover:bg-amber-700 text-white rounded-xl">
-                  <ShieldCheck className="w-4 h-4 mr-2" />
+                <button className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-amber-400 hover:bg-amber-300 text-amber-900 text-sm font-bold transition-colors">
+                  <ShieldCheck className="w-4 h-4" />
                   {donorActionLabel}
-                </Button>
+                </button>
               </Link>
             )
           ) : (
             <Link to={createPageUrl("MealsList")}>
-              <Button className="bg-[#1B5E3B] hover:bg-[#154d30] text-white rounded-xl">
-                <Search className="w-4 h-4 mr-2" />
-                Rechercher des repas
-              </Button>
+              <button className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white/15 hover:bg-white/25 text-white text-sm font-semibold transition-colors backdrop-blur-sm">
+                <Search className="w-4 h-4" />
+                Trouver des repas
+              </button>
             </Link>
           )}
         </div>
 
+        {/* ── Info banners ──────────────────────────────────────────── */}
         {isDonor && !isVerifiedDonor && (
-          <Card className="border-amber-200 bg-amber-50">
-            <CardContent className="p-4 text-sm text-amber-900">
-              {donorStatusMessage}
-            </CardContent>
-          </Card>
+          <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3.5">
+            <ShieldCheck className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+            <p className="text-sm text-amber-900">{donorStatusMessage}</p>
+          </div>
         )}
-
         {isReceiver && (
-          <Card className="border-emerald-200 bg-emerald-50">
-            <CardContent className="p-4 text-sm text-emerald-900">
-              En tant que receveur, vous pouvez reserver des repas immediatement
-              apres inscription.
-            </CardContent>
-          </Card>
+          <div className="flex items-start gap-3 bg-emerald-50 border border-emerald-200 rounded-2xl px-4 py-3.5">
+            <Heart className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+            <p className="text-sm text-emerald-900">
+              En tant que receveur, vous pouvez réserver des repas immédiatement
+              après inscription.
+            </p>
+          </div>
         )}
 
-        {/* Stats */}
+        {/* ── Stats bento grid ──────────────────────────────────────── */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {stats.map((stat) => (
-            <Card
+            <div
               key={stat.title}
-              className="border-[#dbe5f2] bg-gradient-to-br from-[#f8fbff] to-[#edf4ff] shadow-sm"
+              className="bg-white rounded-3xl border border-stone-100 p-5 hover:shadow-md hover:shadow-emerald-900/6 transition-shadow"
             >
-              <CardContent className="p-5">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-[#51627a]">
-                      {stat.title}
-                    </p>
-                    <p className="text-2xl font-bold text-[#0f2a57] mt-1">
-                      {stat.value}
-                    </p>
-                  </div>
-                  <div
-                    className={`w-10 h-10 rounded-xl border border-[#dbe5f2] bg-white ${stat.bgColor} flex items-center justify-center`}
-                  >
-                    <stat.icon
-                      className={`w-5 h-5 ${stat.color.replace("bg-", "text-")}`}
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+              <div
+                className={`w-10 h-10 rounded-2xl ${stat.bgColor} flex items-center justify-center mb-3`}
+              >
+                <stat.icon
+                  className={`w-5 h-5 ${stat.color.replace("bg-", "text-")}`}
+                />
+              </div>
+              <p className="text-2xl font-extrabold text-[#191c19]">
+                {stat.value}
+              </p>
+              <p className="text-xs text-stone-400 font-medium mt-0.5">
+                {stat.title}
+              </p>
+            </div>
           ))}
         </div>
 
-        {/* My recent donations */}
+        {/* ── Donor: pending reservations alert ────────────────────── */}
+        {isDonor && pendingDonorReservations.length > 0 && (
+          <div className="space-y-2">
+            <h2 className="text-base font-extrabold text-[#191c19] flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-amber-500" />
+              Réservations à confirmer ({pendingDonorReservations.length})
+            </h2>
+            {pendingDonorReservations.map((meal) => (
+              <div
+                key={meal.id}
+                className="flex items-center justify-between bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3"
+              >
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-amber-900 truncate">
+                    {meal.title}
+                  </p>
+                  <p className="text-xs text-amber-700 mt-0.5">
+                    Réservé par{" "}
+                    <span className="font-medium">{meal.reserved_by_name}</span>
+                    {" — "}
+                    <a
+                      href={`mailto:${meal.reserved_by_email}`}
+                      className="underline"
+                    >
+                      {meal.reserved_by_email}
+                    </a>
+                  </p>
+                </div>
+                <Link
+                  to={`/MealDetail?id=${meal.id}`}
+                  className="shrink-0 ml-3"
+                >
+                  <button className="px-3 py-1.5 rounded-xl bg-[#1b5e3b] text-white text-xs font-semibold hover:bg-[#004527] transition-colors">
+                    Confirmer
+                  </button>
+                </Link>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* ── My recent donations ───────────────────────────────────── */}
         {isDonor && (
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">
+              <h2 className="text-base font-extrabold text-[#191c19]">
                 Mes derniers dons
               </h2>
               <Link to={createPageUrl("MealHistory")}>
-                <Button variant="ghost" className="text-[#1B5E3B] text-sm">
-                  Tout voir <ArrowRight className="w-3.5 h-3.5 ml-1" />
-                </Button>
+                <button className="text-sm font-semibold text-[#1b5e3b] hover:text-[#004527] flex items-center gap-1">
+                  Tout voir <ArrowRight className="w-3.5 h-3.5" />
+                </button>
               </Link>
             </div>
             {myMeals.length === 0 ? (
-              <Card className="border-[#f0e8df] border-dashed">
-                <CardContent className="p-8 text-center">
-                  <Gift className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-                  <p className="text-gray-500">
-                    Vous n'avez pas encore publie de repas.
-                  </p>
-                  <Link
-                    to={createPageUrl("PublishMeal")}
-                    className="mt-4 inline-block"
+              <div className="bg-white border-2 border-dashed border-stone-200 rounded-3xl p-8 text-center">
+                <div className="w-14 h-14 bg-stone-100 rounded-3xl flex items-center justify-center mx-auto mb-3">
+                  <Gift className="w-7 h-7 text-stone-400" />
+                </div>
+                <p className="font-semibold text-stone-600 text-sm">
+                  Vous n'avez pas encore publié de repas.
+                </p>
+                <Link
+                  to={createPageUrl("PublishMeal")}
+                  className="mt-4 inline-block"
+                >
+                  <button
+                    disabled={!isVerifiedDonor}
+                    className="px-5 py-2.5 rounded-2xl bg-[#1b5e3b] text-white text-sm font-semibold hover:bg-[#004527] disabled:opacity-40 transition-colors"
                   >
-                    <Button
-                      variant="outline"
-                      className="rounded-xl border-[#1B5E3B]/20 text-[#1B5E3B]"
-                      disabled={!isVerifiedDonor}
-                    >
-                      Publier mon premier repas
-                    </Button>
-                  </Link>
-                </CardContent>
-              </Card>
+                    Publier mon premier repas
+                  </button>
+                </Link>
+              </div>
             ) : (
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {myMeals.slice(0, 3).map((meal) => (
@@ -304,10 +347,10 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* My reservations */}
+        {/* ── My reservations ───────────────────────────────────────── */}
         {!isAdmin && myReservations.length > 0 && (
           <div>
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            <h2 className="text-base font-extrabold text-[#191c19] mb-4">
               Mes réservations
             </h2>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">

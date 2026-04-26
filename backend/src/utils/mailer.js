@@ -270,6 +270,121 @@ export async function sendRestaurantDecisionEmail({
   });
 }
 
+export async function sendMealReservedEmailToDonor({
+  to,
+  donorName,
+  mealTitle,
+  receiverName,
+  receiverEmail,
+  deliveryOption,
+  mealUrl,
+}) {
+  const subject = `${appName()}: un receveur a reserve votre repas`;
+  const safeDonorName = escapeHtml(donorName || "donneur");
+  const safeMealTitle = escapeHtml(mealTitle || "votre repas");
+  const safeReceiverName = escapeHtml(receiverName || "un receveur");
+  const safeReceiverEmail = escapeHtml(receiverEmail || "");
+  const modeLabel =
+    deliveryOption === "pickup"
+      ? "A recuperer sur place"
+      : deliveryOption === "delivery"
+        ? "Livraison a domicile"
+        : "Pickup ou livraison";
+
+  const html = renderEmailLayout({
+    title: "Nouvelle reservation !",
+    subtitle: `${safeReceiverName} a reserve votre repas.`,
+    bodyHtml: `
+      <p style="margin:0 0 12px;font-size:15px;">Bonjour ${safeDonorName},</p>
+      <p style="margin:0 0 14px;font-size:15px;line-height:1.5;">
+        <strong>${safeReceiverName}</strong> (<a href="mailto:${safeReceiverEmail}">${safeReceiverEmail}</a>)
+        vient de reserver votre repas : <strong>${safeMealTitle}</strong>.
+      </p>
+      <p style="margin:0 0 14px;font-size:14px;color:#4b5f51;">Mode de remise : <strong>${escapeHtml(modeLabel)}</strong></p>
+      <p style="margin:0 0 14px;font-size:15px;line-height:1.5;">
+        Connectez-vous a la plateforme pour confirmer la reservation et contacter le receveur.
+      </p>
+    `,
+    ctaLabel: "Voir et confirmer la reservation",
+    ctaHref: mealUrl || "",
+    footerNote: "Merci pour votre geste solidaire !",
+  });
+
+  const text = [
+    `Bonjour ${donorName || "donneur"},`,
+    "",
+    `${receiverName || "Un receveur"} (${receiverEmail}) a reserve votre repas : ${mealTitle}.`,
+    `Mode : ${modeLabel}`,
+    "",
+    "Connectez-vous pour confirmer la reservation.",
+    mealUrl || "",
+  ].join("\n");
+
+  return deliverMail({ to, subject, text, html });
+}
+
+export async function sendMealConfirmedEmailToReceiver({
+  to,
+  receiverName,
+  mealTitle,
+  donorName,
+  donorEmail,
+  deliveryOption,
+  address,
+  mealUrl,
+}) {
+  const subject = `${appName()}: votre reservation est confirmee !`;
+  const safeReceiverName = escapeHtml(receiverName || "ami solidaire");
+  const safeMealTitle = escapeHtml(mealTitle || "le repas");
+  const safeDonorName = escapeHtml(donorName || "le donneur");
+  const safeDonorEmail = escapeHtml(donorEmail || "");
+  const safeAddress = escapeHtml(address || "");
+  const modeLabel =
+    deliveryOption === "pickup"
+      ? "Vous devez recuperer le repas sur place"
+      : deliveryOption === "delivery"
+        ? "Le donneur va vous livrer — il vous contactera pour l'adresse"
+        : "Contactez le donneur pour convenir des modalites";
+
+  const html = renderEmailLayout({
+    title: "Reservation confirmee !",
+    subtitle: `${safeDonorName} a confirme votre reservation.`,
+    bodyHtml: `
+      <p style="margin:0 0 12px;font-size:15px;">Bonjour ${safeReceiverName},</p>
+      <p style="margin:0 0 14px;font-size:15px;line-height:1.5;">
+        Bonne nouvelle ! <strong>${safeDonorName}</strong> a confirme votre reservation pour :
+        <strong>${safeMealTitle}</strong>.
+      </p>
+      ${safeAddress ? `<p style="margin:0 0 14px;font-size:14px;color:#4b5f51;">Adresse : <strong>${safeAddress}</strong></p>` : ""}
+      <p style="margin:0 0 14px;font-size:14px;color:#4b5f51;">Mode : <strong>${escapeHtml(modeLabel)}</strong></p>
+      <p style="margin:0 0 14px;font-size:14px;color:#4b5f51;">
+        Contacter le donneur : <a href="mailto:${safeDonorEmail}">${safeDonorEmail}</a>
+      </p>
+      <p style="margin:0;font-size:14px;color:#4b5f51;">
+        Une fois le repas recupere, pensez a marquer la reservation comme "recuperee" sur la plateforme.
+      </p>
+    `,
+    ctaLabel: "Voir les details du repas",
+    ctaHref: mealUrl || "",
+    footerNote: "Merci de faire confiance a Repas Solidaire !",
+  });
+
+  const text = [
+    `Bonjour ${receiverName || "ami solidaire"},`,
+    "",
+    `${donorName || "Le donneur"} a confirme votre reservation pour : ${mealTitle}.`,
+    address ? `Adresse : ${address}` : "",
+    `Mode : ${modeLabel}`,
+    `Contacter le donneur : ${donorEmail}`,
+    "",
+    mealUrl || "",
+  ]
+    .filter((l) => l !== "")
+    .join("\n");
+
+  return deliverMail({ to, subject, text, html });
+}
+
 export async function sendPhoneOtpSms({ phone, code }) {
   // If a real SMS provider (e.g. Twilio) is configured, send via HTTP.
   // For now we just log in development so the flow can be tested without credentials.

@@ -2,9 +2,215 @@
  * Page: AdminReceiversPage (Receveurs)
  * Liste des receveurs avec détection des "signaleurs fréquents"
  */
-import React, { useState, useMemo } from "react";
-import { Search, AlertTriangle } from "lucide-react";
-import { MOCK_RECEVEURS, formatDateFrench } from "../mockDataFrench";
+import React, { useState, useMemo, useEffect } from "react";
+import { Search, AlertTriangle, X, Phone, MapPin, Calendar, ShieldOff, ShieldCheck, Mail } from "lucide-react";
+import { formatDateFrench } from "../mockDataFrench";
+import { backendApi } from "@/api/backendClient";
+import { useAuth } from "@/lib/AuthContext";
+
+// ---------------------------------------------------------------------------
+// User Detail Modal
+// ---------------------------------------------------------------------------
+function UserDetailModal({ user, onClose, onStatusChange }) {
+  const { token } = useAuth();
+  const [reason, setReason] = useState("");
+  const [showSuspendForm, setShowSuspendForm] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const isSuspended =
+    user.accountStatus === "suspended" || user.accountStatus === "suspended_auto";
+
+  async function handleSuspend() {
+    if (!reason.trim() || reason.trim().length < 5) {
+      setError("Veuillez saisir une raison d'au moins 5 caractères.");
+      return;
+    }
+    setLoading(true);
+    setError("");
+    try {
+      const data = await backendApi.admin.suspendUser(token, user.id, reason.trim());
+      onStatusChange({ ...user, accountStatus: data?.user?.accountStatus || "suspended" });
+      onClose();
+    } catch (e) {
+      setError(e?.data?.error || "Erreur lors de la suspension.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleUnsuspend() {
+    setLoading(true);
+    setError("");
+    try {
+      const data = await backendApi.admin.unsuspendUser(token, user.id);
+      onStatusChange({ ...user, accountStatus: data?.user?.accountStatus || "active" });
+      onClose();
+    } catch (e) {
+      setError(e?.data?.error || "Erreur lors de la réactivation.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const statusLabel =
+    user.accountStatus === "active"
+      ? "Actif"
+      : user.accountStatus === "email_pending"
+        ? "En attente (email)"
+        : "Suspendu";
+
+  const statusColor =
+    user.accountStatus === "active"
+      ? "bg-green-100 text-green-800"
+      : user.accountStatus === "email_pending"
+        ? "bg-yellow-100 text-yellow-800"
+        : "bg-red-100 text-red-800";
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+      {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+          <h2 className="text-lg font-bold text-gray-800">Détail du receveur</h2>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors text-gray-500"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="px-6 py-5 space-y-4">
+          {/* Avatar + Name */}
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-xl flex-shrink-0">
+              {user.nom.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)}
+            </div>
+            <div>
+              <p className="text-xl font-bold text-gray-800">{user.nom}</p>
+              <span className={`inline-block mt-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${statusColor}`}>
+                {statusLabel}
+              </span>
+            </div>
+          </div>
+
+          {/* Info grid */}
+          <div className="space-y-2.5 text-sm">
+            <div className="flex items-center gap-2.5 text-gray-700">
+              <Mail className="w-4 h-4 text-gray-400 flex-shrink-0" />
+              <span>{user.email}</span>
+            </div>
+            {user.telephone && (
+              <div className="flex items-center gap-2.5 text-gray-700">
+                <Phone className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                <span>{user.telephone}</span>
+              </div>
+            )}
+            {user.ville && (
+              <div className="flex items-center gap-2.5 text-gray-700">
+                <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                <span>{user.ville}</span>
+              </div>
+            )}
+            <div className="flex items-center gap-2.5 text-gray-700">
+              <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
+              <span>
+                Inscrit le{" "}
+                {new Date(user.dateInscription).toLocaleDateString("fr-FR", {
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                })}
+              </span>
+            </div>
+          </div>
+
+          {/* Suspension reason (if any) */}
+          {isSuspended && user.suspensionReason && (
+            <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-sm text-red-800">
+              <strong>Raison de suspension :</strong> {user.suspensionReason}
+            </div>
+          )}
+
+          {/* Error */}
+          {error && (
+            <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+              {error}
+            </p>
+          )}
+
+          {/* Suspend form */}
+          {showSuspendForm && !isSuspended && (
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">
+                Raison de la suspension <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                rows={3}
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                placeholder="Ex : Abus répétés, faux signalements..."
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-400 resize-none"
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Footer actions */}
+        <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex flex-wrap gap-2 justify-end">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            Fermer
+          </button>
+
+          {isSuspended ? (
+            <button
+              onClick={handleUnsuspend}
+              disabled={loading}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 disabled:opacity-60 transition-colors"
+            >
+              <ShieldCheck className="w-4 h-4" />
+              {loading ? "En cours..." : "Réactiver le compte"}
+            </button>
+          ) : showSuspendForm ? (
+            <>
+              <button
+                onClick={() => { setShowSuspendForm(false); setError(""); }}
+                className="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleSuspend}
+                disabled={loading}
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-60 transition-colors"
+              >
+                <ShieldOff className="w-4 h-4" />
+                {loading ? "En cours..." : "Confirmer la suspension"}
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={() => setShowSuspendForm(true)}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
+            >
+              <ShieldOff className="w-4 h-4" />
+              Suspendre
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 
 function StatusBadge({ isFrequentReporter }) {
   if (isFrequentReporter) {
@@ -30,9 +236,32 @@ function StatusBadge({ isFrequentReporter }) {
 
 export default function AdminReceiversPageNew() {
   const [searchQuery, setSearchQuery] = useState("");
+  const { token } = useAuth();
+  const [receveurs, setReceveurs] = useState([]);
+  const [selectedUser, setSelectedUser] = useState(null);
 
-  // TODO: Replace with GET /api/admin/receveurs
-  const receveurs = MOCK_RECEVEURS;
+  useEffect(() => {
+    if (!token) return;
+    backendApi.admin
+      .listUsers(token, { role: "ROLE_RECEIVER" })
+      .then((data) => {
+        const users = data?.users || [];
+        setReceveurs(
+          users.map((u) => ({
+            id: u.id,
+            nom: u.name || u.fullName || u.email,
+            email: u.email,
+            ville: u.city || "",
+            telephone: u.phone || "",
+            dateInscription: u.createdAt,
+            reportsEmitted: 0,
+            accountStatus: u.accountStatus,
+            suspensionReason: u.suspensionReason || "",
+          }))
+        );
+      })
+      .catch(() => {});
+  }, [token]);
 
   // Filtered receveurs
   const filteredReceveurs = useMemo(() => {
@@ -63,7 +292,19 @@ export default function AdminReceiversPageNew() {
 
   return (
     <div className="space-y-5">
-      {/* Header */}
+      {/* User Detail Modal */}
+      {selectedUser && (
+        <UserDetailModal
+          user={selectedUser}
+          onClose={() => setSelectedUser(null)}
+          onStatusChange={(updated) => {
+            setReceveurs((prev) =>
+              prev.map((r) => (r.id === updated.id ? { ...r, accountStatus: updated.accountStatus } : r))
+            );
+          }}
+        />
+      )}
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">Receveurs</h1>
@@ -149,9 +390,7 @@ export default function AdminReceiversPageNew() {
                   <tr
                     key={receveur.id}
                     className="hover:bg-gray-50 cursor-pointer transition-colors"
-                    onClick={() =>
-                      alert(`Détail: ${receveur.nom} - À implémenter`)
-                    }
+                    onClick={() => setSelectedUser(receveur)}
                   >
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">

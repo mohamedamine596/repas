@@ -1,9 +1,13 @@
 {
-  "name": "Repas Solidaire",
-  "short_name": "Repas",
+  "name": "Repas Solidaire — Solidarité Sans Frontières",
+  "short_name": "Repas Solidaire",
+  "description": "Donnez ou trouvez des repas gratuits près de chez vous. Plateforme solidaire anti-gaspillage.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
+  "background_color": "#FFF8F0",
   "theme_color": "#1B5E3B",
+  "lang": "fr-FR",
+  "orientation": "portrait-primary",
+  "categories": ["food", "social", "lifestyle"],
   "icons": []
 }
