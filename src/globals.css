@@ -27,27 +27,27 @@
   }
 }
 
-/* Dark mode CSS variables */
+/* Dark mode CSS variables - IMPROVED CONTRAST */
 .dark {
-  --background: 150 20% 8%;
-  --foreground: 30 20% 94%;
-  --card: 150 15% 11%;
-  --card-foreground: 30 20% 94%;
-  --popover: 150 15% 11%;
-  --popover-foreground: 30 20% 94%;
-  --primary: 152 45% 38%;
-  --primary-foreground: 0 0% 100%;
-  --secondary: 150 12% 16%;
-  --secondary-foreground: 30 15% 90%;
-  --muted: 150 10% 18%;
-  --muted-foreground: 150 5% 58%;
-  --accent: 14 76% 59%;
-  --accent-foreground: 0 0% 100%;
-  --destructive: 0 84% 60%;
-  --destructive-foreground: 0 0% 100%;
-  --border: 150 10% 20%;
-  --input: 150 10% 20%;
-  --ring: 152 45% 38%;
+  --background: 0 0% 98%; /* Light background instead of dark */
+  --foreground: 150 30% 15%; /* Dark text */
+  --card: 0 0% 100%; /* White cards */
+  --card-foreground: 150 30% 15%; /* Dark text on cards */
+  --popover: 0 0% 100%; /* White popover */
+  --popover-foreground: 150 30% 15%; /* Dark text */
+  --primary: 152 55% 24%; /* Same green */
+  --primary-foreground: 0 0% 100%; /* White */
+  --secondary: 30 40% 95%; /* Light gray */
+  --secondary-foreground: 150 30% 15%; /* Dark text */
+  --muted: 30 20% 94%; /* Light muted */
+  --muted-foreground: 150 10% 40%; /* Readable gray */
+  --accent: 14 76% 59%; /* Same orange */
+  --accent-foreground: 0 0% 100%; /* White */
+  --destructive: 0 84% 60%; /* Same red */
+  --destructive-foreground: 0 0% 100%; /* White */
+  --border: 30 15% 85%; /* Visible border */
+  --input: 30 15% 90%; /* Light input background */
+  --ring: 152 55% 24%; /* Same green */
 }
 
 @layer base {

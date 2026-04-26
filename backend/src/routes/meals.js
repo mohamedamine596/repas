@@ -93,13 +93,28 @@ router.get("/", async (req, res) => {
     sort = "-created_date",
     limit = "100",
     status,
+    reserved_by_email,
+    donor_email,
     ...filters
   } = req.query;
 
-  // Default: only show available meals to the public
-  const statusFilter = status || "available";
-  let meals = db.meals.filter((m) => m.status === statusFilter);
-  meals = applyFilters(meals, filters);
+  let meals = db.meals;
+
+  // If filtering by a specific user's reservations or donations, don't restrict by status
+  if (reserved_by_email) {
+    meals = meals.filter((m) => m.reserved_by_email === reserved_by_email);
+  } else if (donor_email) {
+    meals = meals.filter((m) => m.donor_email === donor_email);
+  } else {
+    // Default: only show available meals to the public
+    const statusFilter = status || "available";
+    meals = meals.filter((m) => m.status === statusFilter);
+    meals = applyFilters(meals, filters);
+  }
+
+  if (status && (reserved_by_email || donor_email)) {
+    meals = meals.filter((m) => m.status === status);
+  }
 
   const sortKey = String(sort).replace(/^-/, "");
   const isDesc = String(sort).startsWith("-");
@@ -142,12 +157,10 @@ router.post(
 
     // Food safety rule 1: cannot post food that is already expired
     if (expiresAt <= now) {
-      return res
-        .status(422)
-        .json({
-          error: "Cannot post food that is already expired",
-          code: "FOOD_EXPIRED",
-        });
+      return res.status(422).json({
+        error: "Cannot post food that is already expired",
+        code: "FOOD_EXPIRED",
+      });
     }
 
     // Food safety rule 2: preparation must be within the last 24 hours
@@ -278,11 +291,9 @@ router.patch(
       return res.status(403).json({ error: "You did not reserve this meal" });
 
     if (meal.status !== "reserved") {
-      return res
-        .status(409)
-        .json({
-          error: "Meal must be in reserved status to mark as collected",
-        });
+      return res.status(409).json({
+        error: "Meal must be in reserved status to mark as collected",
+      });
     }
 
     const now = new Date().toISOString();

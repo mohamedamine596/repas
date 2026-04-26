@@ -33,8 +33,10 @@ const userSchema = new mongoose.Schema(
     refreshTokens: Array,
     createdAt: String,
     updatedAt: String,
+    donorQuiz: Object,
   },
   {
+    strict: false,
     timestamps: false,
   },
 );

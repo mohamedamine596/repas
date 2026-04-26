@@ -51,10 +51,12 @@ export default function Messages() {
           {convList.map((conv) => (
             <Link
               key={conv.partnerEmail}
-              to={createPageUrl("Conversation") + `?partner=${conv.partnerEmail}`}
+              to={
+                createPageUrl("Conversation") + `?partner=${conv.partnerEmail}`
+              }
             >
-              <Card className="border-[#f0e8df] hover:shadow-md hover:border-[#1B5E3B]/20 transition-all cursor-pointer">
-                <CardContent className="p-4 flex items-center gap-4">
+              <Card className="border-[#f0e8df] bg-white hover:shadow-md hover:border-[#1B5E3B]/20 transition-all cursor-pointer">
+                <CardContent className="p-4 flex items-center gap-4 bg-white">
                   <div className="w-11 h-11 rounded-full bg-[#1B5E3B]/10 flex items-center justify-center flex-shrink-0">
                     <span className="text-sm font-bold text-[#1B5E3B]">
                       {conv.partnerName?.[0]?.toUpperCase() || "?"}
@@ -62,15 +64,21 @@ export default function Messages() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
-                      <span className="font-semibold text-sm text-gray-900">{conv.partnerName}</span>
-                      <span className="text-xs text-gray-400">
-                        {format(new Date(conv.lastMessage.createdAt), "d MMM HH:mm", { locale: fr })}
+                      <span className="font-semibold text-sm text-gray-900">
+                        {conv.partnerName}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {format(
+                          new Date(conv.lastMessage.createdAt),
+                          "d MMM HH:mm",
+                          { locale: fr },
+                        )}
                       </span>
                     </div>
                     <div className="flex items-center justify-between mt-1">
-                      <p className="text-sm text-gray-500 truncate pr-4">
+                      <p className="text-sm text-gray-600 truncate pr-4">
                         {conv.lastMessage.fromEmail === user.email && (
-                          <span className="text-gray-400">Vous : </span>
+                          <span className="text-gray-500">Vous : </span>
                         )}
                         {conv.lastMessage.content}
                       </p>

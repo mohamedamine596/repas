@@ -18,18 +18,23 @@ export default function MealHistory() {
   const { data: myDonations = [], isLoading: loadingDonations } = useQuery({
     queryKey: ["historyDonations", user?.email],
     queryFn: async () => {
-      return backendApi.meals.list({ donor_email: user.email }, "-created_date", 100);
+      return backendApi.meals.listByDonor(user.email, "-created_date", 100);
     },
     enabled: !!user?.email,
   });
 
-  const { data: myReservations = [], isLoading: loadingReservations } = useQuery({
-    queryKey: ["historyReservations", user?.email],
-    queryFn: async () => {
-      return backendApi.meals.list({ reserved_by: user.email }, "-created_date", 100);
-    },
-    enabled: !!user?.email,
-  });
+  const { data: myReservations = [], isLoading: loadingReservations } =
+    useQuery({
+      queryKey: ["historyReservations", user?.email],
+      queryFn: async () => {
+        return backendApi.meals.listByReserver(
+          user.email,
+          "-created_date",
+          100,
+        );
+      },
+      enabled: !!user?.email,
+    });
 
   if (isLoadingAuth || !user) return null;
 
@@ -49,11 +54,17 @@ export default function MealHistory() {
       ) : (
         <Tabs defaultValue="donations">
           <TabsList className="bg-[#f5efe8]">
-            <TabsTrigger value="donations" className="data-[state=active]:bg-[#1B5E3B] data-[state=active]:text-white">
+            <TabsTrigger
+              value="donations"
+              className="data-[state=active]:bg-[#1B5E3B] data-[state=active]:text-white"
+            >
               <Gift className="w-4 h-4 mr-2" />
               Mes dons ({myDonations.length})
             </TabsTrigger>
-            <TabsTrigger value="reservations" className="data-[state=active]:bg-[#1B5E3B] data-[state=active]:text-white">
+            <TabsTrigger
+              value="reservations"
+              className="data-[state=active]:bg-[#1B5E3B] data-[state=active]:text-white"
+            >
               <Heart className="w-4 h-4 mr-2" />
               Récupérations ({myReservations.length})
             </TabsTrigger>
@@ -78,7 +89,9 @@ export default function MealHistory() {
             {myReservations.length === 0 ? (
               <div className="text-center py-16">
                 <Heart className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-                <p className="text-gray-400">Aucune récupération pour le moment</p>
+                <p className="text-gray-400">
+                  Aucune récupération pour le moment
+                </p>
               </div>
             ) : (
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">

@@ -296,6 +296,26 @@ export const backendApi = {
     },
     getById: (id) =>
       request(`/meals/${encodeURIComponent(id)}`).then((d) => d?.meal || null),
+    listByDonor: (email, sort = "-created_date", limit = 100) => {
+      const params = new URLSearchParams({
+        donor_email: email,
+        sort,
+        limit: String(limit),
+      });
+      return request(`/meals?${params.toString()}`).then((d) =>
+        Array.isArray(d?.meals) ? d.meals : [],
+      );
+    },
+    listByReserver: (email, sort = "-created_date", limit = 100) => {
+      const params = new URLSearchParams({
+        reserved_by_email: email,
+        sort,
+        limit: String(limit),
+      });
+      return request(`/meals?${params.toString()}`).then((d) =>
+        Array.isArray(d?.meals) ? d.meals : [],
+      );
+    },
     create: (token, payload) =>
       request("/meals", { method: "POST", token, body: payload }).then(
         (d) => d?.meal,

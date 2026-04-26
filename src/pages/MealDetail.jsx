@@ -6,12 +6,30 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  MapPin, Clock, Package, Truck, User, MessageCircle,
-  AlertTriangle, ArrowLeft, CheckCircle2, Loader2
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  MapPin,
+  Clock,
+  Package,
+  Truck,
+  User,
+  MessageCircle,
+  AlertTriangle,
+  ArrowLeft,
+  CheckCircle2,
+  Loader2,
 } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -63,7 +81,11 @@ export default function MealDetail() {
   });
 
   const sendMessageMutation = useMutation({
-    mutationFn: () => backendApi.messages.send(token, { toEmail: meal.donor_email, content: message }),
+    mutationFn: () =>
+      backendApi.messages.send(token, {
+        toEmail: meal.donor_email,
+        content: message,
+      }),
     onSuccess: () => {
       toast.success("Message envoyé !");
       setMessage("");
@@ -118,14 +140,22 @@ export default function MealDetail() {
 
   return (
     <div className="max-w-3xl mx-auto pb-24 md:pb-8 space-y-6">
-      <Button variant="ghost" className="text-gray-500" onClick={() => navigate(-1)}>
+      <Button
+        variant="ghost"
+        className="text-gray-500"
+        onClick={() => navigate(-1)}
+      >
         <ArrowLeft className="w-4 h-4 mr-2" /> Retour
       </Button>
 
       {/* Image */}
       <div className="relative h-56 md:h-72 bg-gradient-to-br from-[#1B5E3B]/5 to-[#E8634A]/5 rounded-2xl overflow-hidden">
         {meal.photo_url ? (
-          <img src={meal.photo_url} alt={meal.title} className="w-full h-full object-cover" />
+          <img
+            src={meal.photo_url}
+            alt={meal.title}
+            className="w-full h-full object-cover"
+          />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-7xl">
             {FOOD_LABELS[meal.food_type]?.split(" ")[0] || "🍽️"}
@@ -139,9 +169,15 @@ export default function MealDetail() {
       {/* Details */}
       <div className="space-y-4">
         <div>
-          <p className="text-sm font-medium text-[#E8634A]">{FOOD_LABELS[meal.food_type]}</p>
-          <h1 className="text-2xl font-bold text-gray-900 mt-1">{meal.title}</h1>
-          <p className="text-gray-500 mt-2 leading-relaxed">{meal.description}</p>
+          <p className="text-sm font-medium text-[#E8634A]">
+            {FOOD_LABELS[meal.food_type]}
+          </p>
+          <h1 className="text-2xl font-bold text-gray-900 mt-1">
+            {meal.title}
+          </h1>
+          <p className="text-gray-500 mt-2 leading-relaxed">
+            {meal.description}
+          </p>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
@@ -161,7 +197,9 @@ export default function MealDetail() {
                 <p className="text-xs text-gray-400">Disponibilité</p>
                 <p className="text-sm font-medium">
                   {meal.available_date
-                    ? format(new Date(meal.available_date), "d MMM, HH:mm", { locale: fr })
+                    ? format(new Date(meal.available_date), "d MMM, HH:mm", {
+                        locale: fr,
+                      })
                     : "—"}
                 </p>
               </div>
@@ -173,8 +211,11 @@ export default function MealDetail() {
               <div>
                 <p className="text-xs text-gray-400">Mode</p>
                 <p className="text-sm font-medium">
-                  {meal.delivery_option === "pickup" ? "À récupérer" :
-                   meal.delivery_option === "delivery" ? "Livraison" : "Les deux"}
+                  {meal.delivery_option === "pickup"
+                    ? "À récupérer"
+                    : meal.delivery_option === "delivery"
+                      ? "Livraison"
+                      : "Les deux"}
                 </p>
               </div>
             </CardContent>
@@ -222,27 +263,43 @@ export default function MealDetail() {
         {isDonor && (
           <Card className="border-[#f0e8df]">
             <CardContent className="p-4 space-y-3">
-              <p className="text-sm font-medium text-gray-700">Modifier le statut :</p>
+              <p className="text-sm font-medium text-gray-700">
+                Modifier le statut :
+              </p>
               <div className="flex flex-wrap gap-2">
-                {["available", "reserved", "collected", "delivered", "expired"].map((s) => (
+                {[
+                  "available",
+                  "reserved",
+                  "collected",
+                  "delivered",
+                  "expired",
+                ].map((s) => (
                   <Button
                     key={s}
                     variant={meal.status === s ? "default" : "outline"}
                     size="sm"
-                    className={meal.status === s ? "bg-[#1B5E3B] text-white" : ""}
+                    className={
+                      meal.status === s ? "bg-[#1B5E3B] text-white" : ""
+                    }
                     onClick={() => updateStatusMutation.mutate(s)}
                     disabled={updateStatusMutation.isPending}
                   >
-                    {s === "available" ? "Disponible" :
-                     s === "reserved" ? "Réservé" :
-                     s === "collected" ? "Récupéré" :
-                     s === "delivered" ? "Livré" : "Expiré"}
+                    {s === "available"
+                      ? "Disponible"
+                      : s === "reserved"
+                        ? "Réservé"
+                        : s === "collected"
+                          ? "Récupéré"
+                          : s === "delivered"
+                            ? "Livré"
+                            : "Expiré"}
                   </Button>
                 ))}
               </div>
               {meal.reserved_by_name && (
                 <p className="text-sm text-gray-500">
-                  Réservé par : <span className="font-medium">{meal.reserved_by_name}</span>
+                  Réservé par :{" "}
+                  <span className="font-medium">{meal.reserved_by_name}</span>
                 </p>
               )}
             </CardContent>
@@ -282,7 +339,10 @@ export default function MealDetail() {
         {!isDonor && (
           <Dialog open={reportOpen} onOpenChange={setReportOpen}>
             <DialogTrigger asChild>
-              <Button variant="ghost" className="w-full text-gray-400 hover:text-red-500">
+              <Button
+                variant="ghost"
+                className="w-full text-gray-400 hover:text-red-500"
+              >
                 <AlertTriangle className="w-4 h-4 mr-2" />
                 Signaler cette annonce
               </Button>
@@ -297,7 +357,9 @@ export default function MealDetail() {
                     <SelectValue placeholder="Raison du signalement" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="inappropriate">Contenu inapproprié</SelectItem>
+                    <SelectItem value="inappropriate">
+                      Contenu inapproprié
+                    </SelectItem>
                     <SelectItem value="expired">Nourriture périmée</SelectItem>
                     <SelectItem value="fake">Fausse annonce</SelectItem>
                     <SelectItem value="spam">Spam</SelectItem>

@@ -80,7 +80,8 @@ export default function PublishMeal() {
     if (!payload.description)
       errors.description = "La description est obligatoire.";
     else if (payload.description.trim().length < 10)
-      errors.description = "La description doit contenir au moins 10 caractères.";
+      errors.description =
+        "La description doit contenir au moins 10 caractères.";
     if (!payload.quantity) errors.quantity = "La quantité est obligatoire.";
     if (!payload.prepared_at)
       errors.prepared_at = "L'heure de préparation est obligatoire.";
@@ -90,7 +91,8 @@ export default function PublishMeal() {
       const prepDate = new Date(payload.prepared_at);
       const expDate = new Date(payload.expires_at);
       if (expDate <= prepDate) {
-        errors.expires_at = "La date d'expiration doit être après la préparation.";
+        errors.expires_at =
+          "La date d'expiration doit être après la préparation.";
       }
     }
     if (!payload.delivery_option)
@@ -161,11 +163,11 @@ export default function PublishMeal() {
     }
 
     // Convert datetime-local to ISO string
-    const preparedISO = form.prepared_at 
-      ? new Date(form.prepared_at).toISOString() 
+    const preparedISO = form.prepared_at
+      ? new Date(form.prepared_at).toISOString()
       : new Date().toISOString();
-    const expiresISO = form.expires_at 
-      ? new Date(form.expires_at).toISOString() 
+    const expiresISO = form.expires_at
+      ? new Date(form.expires_at).toISOString()
       : "";
 
     const payload = {
@@ -234,9 +236,9 @@ export default function PublishMeal() {
       console.error("Error details:", {
         status: error?.status,
         data: error?.data,
-        message: error?.message
+        message: error?.message,
       });
-      
+
       const status = error?.status;
       const message = error?.data?.error || error?.message;
 
@@ -413,7 +415,12 @@ export default function PublishMeal() {
             </div>
 
             <div>
-              <Label htmlFor="desc">Description * <span className="text-xs text-gray-500">(minimum 10 caractères)</span></Label>
+              <Label htmlFor="desc">
+                Description *{" "}
+                <span className="text-xs text-gray-500">
+                  (minimum 10 caractères)
+                </span>
+              </Label>
               <Textarea
                 id="desc"
                 placeholder="Décrivez le repas en détail..."

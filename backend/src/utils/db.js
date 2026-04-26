@@ -3,6 +3,13 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import bcrypt from "bcryptjs";
 import { nanoid } from "nanoid";
+import mongoose from "mongoose";
+import UserModel from "../models/User.js";
+import MealModel from "../models/Meal.js";
+import MessageModel from "../models/Message.js";
+import ReportModel from "../models/Report.js";
+import VerificationRequestModel from "../models/VerificationRequest.js";
+import RestaurantModel from "../models/Restaurant.js";
 import {
   ACCOUNT_STATUS,
   USER_ROLES,
@@ -24,8 +31,15 @@ const DEFAULT_DB = {
   auditLog: [],
 };
 
+function isMongoConnected() {
+  return mongoose.connection.readyState === 1;
+}
+
+function stripMeta(docs) {
+  return docs.map(({ _id, __v, ...rest }) => rest);
+}
+
 const LEGACY_ROLE_MAP = {
-  DONOR: USER_ROLES.RESTAURANT,
   donor: USER_ROLES.RESTAURANT,
   RECEIVER: USER_ROLES.RECEIVER,
   receiver: USER_ROLES.RECEIVER,
@@ -269,6 +283,7 @@ function normalizeUser(user) {
     refreshTokens: Array.isArray(user.refreshTokens)
       ? user.refreshTokens.map(normalizeRefreshSession)
       : [],
+    donorQuiz: user.donorQuiz || null,
   };
 }
 
@@ -469,7 +484,14 @@ function ensureBaseAdmin(normalizedDb) {
   return changed;
 }
 
-export function readDb() {
+export async function readDb() {
+  if (isMongoConnected()) {
+    return await readDbMongo();
+  }
+  return readDbFile();
+}
+
+function readDbFile() {
   ensureDbFile();
   const raw = fs.readFileSync(DB_PATH, "utf8").replace(/^\uFEFF/, ""); // strip UTF-8 BOM if present
   const parsed = JSON.parse(raw);
@@ -501,19 +523,99 @@ export function readDb() {
     .filter((item) => item.id && item.userId);
 
   if (ensureBaseAdmin(normalized)) {
-    writeDb(normalized);
+    writeDbFile(normalized);
   }
 
   return normalized;
 }
 
-export function writeDb(data) {
+async function readDbMongo() {
+  const [users, meals, messages, reports, verificationRequests, restaurants] =
+    await Promise.all([
+      UserModel.find({}).lean(),
+      MealModel.find({}).lean(),
+      MessageModel.find({}).lean(),
+      ReportModel.find({}).lean(),
+      VerificationRequestModel.find({}).lean(),
+      RestaurantModel.find({}).lean(),
+    ]);
+
+  const normalized = {
+    ...DEFAULT_DB,
+    users: stripMeta(users)
+      .map(normalizeUser)
+      .filter((u) => u.id && u.email),
+    meals: stripMeta(meals),
+    messages: stripMeta(messages).map(normalizeMessage),
+    reports: stripMeta(reports),
+    verificationRequests: stripMeta(verificationRequests)
+      .map(normalizeVerificationRequest)
+      .filter((r) => r.id && r.userId),
+    restaurants: stripMeta(restaurants),
+  };
+
+  const userByEmail = new Map(normalized.users.map((u) => [u.email, u]));
+  normalized.meals = normalized.meals.map((m) => normalizeMeal(m, userByEmail));
+
+  if (ensureBaseAdmin(normalized)) {
+    await writeDbMongo(normalized);
+  }
+
+  return normalized;
+}
+
+export async function writeDb(data) {
+  if (isMongoConnected()) {
+    return await writeDbMongo(data);
+  }
+  writeDbFile(data);
+}
+
+function writeDbFile(data) {
   const safeData = { ...DEFAULT_DB, ...data };
   fs.writeFileSync(DB_PATH, JSON.stringify(safeData, null, 2));
 }
 
+async function syncCollection(Model, items) {
+  const validItems = (items || []).filter((item) => item.id);
+  const ids = validItems.map((item) => item.id);
+
+  if (validItems.length > 0) {
+    const ops = validItems.map((item) => ({
+      updateOne: {
+        filter: { id: item.id },
+        update: { $set: item },
+        upsert: true,
+      },
+    }));
+    await Model.bulkWrite(ops);
+  }
+
+  // Delete documents no longer in the collection
+  if (ids.length > 0) {
+    await Model.deleteMany({ id: { $nin: ids } });
+  } else {
+    await Model.deleteMany({});
+  }
+}
+
+async function writeDbMongo(data) {
+  const safeData = { ...DEFAULT_DB, ...data };
+  await Promise.all([
+    syncCollection(UserModel, safeData.users || []),
+    syncCollection(MealModel, safeData.meals || []),
+    syncCollection(MessageModel, safeData.messages || []),
+    syncCollection(ReportModel, safeData.reports || []),
+    syncCollection(
+      VerificationRequestModel,
+      safeData.verificationRequests || [],
+    ),
+    syncCollection(RestaurantModel, safeData.restaurants || []),
+  ]);
+}
+
 /**
- * Remove a meal from db.json by id.
+ * Remove a meal by id.
  * Called by the meals router when deleting a meal.
  */
 export async function deleteMealById(id) {
