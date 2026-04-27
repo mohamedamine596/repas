@@ -23,6 +23,7 @@ import {
   USER_ROLES,
   VERIFICATION_STATUS,
 } from "../constants/auth.js";
+import googleRoutes from "./google.js";
 
 const router = express.Router();
 const OTP_TTL_MS = Number(process.env.OTP_TTL_MS || 10 * 60 * 1000);
@@ -1024,5 +1025,7 @@ router.patch("/me", requireAuth, validate(updateMeSchema), async (req, res) => {
   await writeDb(db);
   return res.json({ user: publicUser(user) });
 });
+
+router.use("/", googleRoutes);
 
 export default router;
