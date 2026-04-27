@@ -9,7 +9,7 @@ function normalizeApiBaseUrl(value) {
   return /\/api$/i.test(clean) ? clean : `${clean}/api`;
 }
 
-const API_BASE_URL = normalizeApiBaseUrl(
+export const API_BASE_URL = normalizeApiBaseUrl(
   import.meta.env.VITE_API_URL ||
     import.meta.env.VITE_BACKEND_API_URL ||
     import.meta.env.VITE_BASE44_APP_BASE_URL,

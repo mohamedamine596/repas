@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSEO } from "@/hooks/useSEO";
 import { createPageUrl } from "@/utils";
+import { API_BASE_URL } from "@/api/backendClient";
 import { useAuth } from "@/lib/AuthContext";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -295,9 +296,7 @@ export default function Login() {
           variant="outline"
           className="h-11 w-full border-gray-300 bg-white hover:bg-gray-50 text-gray-700 font-medium text-[13px] flex items-center justify-center gap-3"
           onClick={() => {
-            const apiUrl =
-              import.meta.env.VITE_API_URL || "http://localhost:4000/api";
-            window.location.href = `${apiUrl}/auth/google`;
+            window.location.href = `${API_BASE_URL}/auth/google`;
           }}
         >
           <svg
