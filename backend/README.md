@@ -43,6 +43,11 @@ REFRESH_TOKEN_TTL=30d
 FRONTEND_APP_URL=https://your-frontend.vercel.app
 APP_URL=https://your-frontend.vercel.app
 
+# Google OAuth login
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+GOOGLE_CALLBACK_URL=https://your-backend-domain/api/auth/google/callback
+
 # Base admin account (auto-created if missing)
 BASE_ADMIN_EMAIL=admin@coeurtablepartage.com
 BASE_ADMIN_PASSWORD=Admin123456!

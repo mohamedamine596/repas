@@ -72,6 +72,7 @@ Backend (Render):
 - Set `NODE_ENV=production`
 - Set `ACCESS_TOKEN_SECRET` and `REFRESH_TOKEN_SECRET`
 - For cross-site auth cookies, set `REFRESH_COOKIE_SAME_SITE=none` and `REFRESH_COOKIE_SECURE=true`
+- For Google login, set `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and `GOOGLE_CALLBACK_URL=https://your-backend-domain/api/auth/google/callback`
 
 **Publish your changes**
 
