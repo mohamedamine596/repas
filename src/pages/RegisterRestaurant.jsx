@@ -101,10 +101,13 @@ export default function RegisterRestaurant() {
       }
 
       const data = await response.json();
+      const exactMatch = Array.isArray(data.results)
+        ? data.results.find((item) => String(item.siren) === siren)
+        : null;
 
-      // Check if we found results
-      if (data.results && data.results.length > 0) {
-        const entreprise = data.results[0];
+      // Check if we found the exact SIREN
+      if (exactMatch) {
+        const entreprise = exactMatch;
 
         // Check if the company is active
         if (entreprise.etat_administratif !== "A") {
@@ -204,6 +207,7 @@ export default function RegisterRestaurant() {
           street: form.street.trim(),
           postalCode: form.postalCode.trim(),
           city: form.city.trim(),
+          country: "FR",
         },
         password: form.password,
       };
@@ -215,9 +219,9 @@ export default function RegisterRestaurant() {
       navigate(createPageUrl("OtpVerification"));
     } catch (err) {
       console.error("Registration error:", err);
-      const errorCode = err?.response?.data?.code;
-      const errorMsg =
-        err?.response?.data?.error || "Erreur lors de l'inscription";
+      const errorData = err?.data || err?.response?.data || {};
+      const errorCode = errorData?.code;
+      const errorMsg = errorData?.error || err?.message || "Erreur lors de l'inscription";
 
       if (errorCode === "SIREN_DUPLICATE") {
         setErrors({ siren: "Ce SIREN est déjà enregistré" });
@@ -225,7 +229,7 @@ export default function RegisterRestaurant() {
       } else if (errorCode === "SIREN_INVALID") {
         setErrors({ siren: "SIREN invalide ou entreprise fermée" });
         toast.error("SIREN invalide ou entreprise fermée");
-        if (err?.response?.data?.sirenApiDown) {
+        if (errorData?.sirenApiDown) {
           setSirenApiDown(true);
           toast.warning(
             "API SIREN indisponible. Votre dossier sera vérifié par l'équipe.",

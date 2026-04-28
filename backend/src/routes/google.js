@@ -40,6 +40,7 @@ function pruneRefreshSessions(user) {
  * Redirect user to Google's OAuth consent screen.
  */
 router.get("/google", (req, res) => {
+  console.log("[Google OAuth] CLIENT_ID present:", !!CLIENT_ID); // add this
   if (!CLIENT_ID || !CLIENT_SECRET) {
     return res
       .status(503)
