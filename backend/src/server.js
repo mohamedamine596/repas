@@ -6,7 +6,6 @@ import cookieParser from "cookie-parser";
 import helmet from "helmet";
 
 import authRoutes from "./routes/auth.js";
-import googleRoutes from "./routes/google.js";
 import messageRoutes from "./routes/messages.js";
 import mealRoutes from "./routes/meals.js";
 import reportRoutes from "./routes/reports.js";
@@ -113,7 +112,6 @@ app.get("/api/health", (req, res) => {
 });
 
 app.use("/api/auth", authRoutes);
-app.use("/api/auth", googleRoutes);
 app.use("/api/verification", verificationRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/messages", messageRoutes);
