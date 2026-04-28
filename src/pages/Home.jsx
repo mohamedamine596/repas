@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { useSEO } from "@/hooks/useSEO";
@@ -11,13 +11,13 @@ import { backendApi } from "@/api/backendClient";
 
 export default function Home() {
   useSEO({
-    title: "Repas Solidaire â€” Donnez ou trouvez des repas gratuits prÃ¨s de chez vous",
-    description: "Plateforme gratuite de partage de repas en France. Donnez vos surplus alimentaires ou trouvez des repas offerts prÃ¨s de chez vous. Anti-gaspillage & solidaritÃ© alimentaire.",
+    title: "Repas Solidaire "” Donnez ou trouvez des repas gratuits près de chez vous",
+    description: "Plateforme gratuite de partage de repas en France. Donnez vos surplus alimentaires ou trouvez des repas offerts près de chez vous. Anti-gaspillage & solidarité alimentaire.",
     url: "https://repas-sable.vercel.app/",
     jsonLd: {
       "@context": "https://schema.org",
       "@type": "WebPage",
-      "name": "Repas Solidaire â€” Accueil",
+      "name": "Repas Solidaire "” Accueil",
       "description": "Plateforme gratuite de partage de repas et de lutte contre le gaspillage alimentaire en France.",
       "url": "https://repas-sable.vercel.app/",
       "inLanguage": "fr-FR"
@@ -35,8 +35,8 @@ export default function Home() {
   }, []);
 
   const stats = [
-    { value: "1 200+", label: "Repas partagÃ©s", color: "text-[#813e44]" },
-    { value: "340+",   label: "BÃ©nÃ©ficiaires",  color: "text-[#004527]" },
+    { value: "1 200+", label: "Repas partagés", color: "text-[#813e44]" },
+    { value: "340+",   label: "Bénéficiaires",  color: "text-[#004527]" },
     { value: "18",     label: "Villes actives",  color: "text-[#1b5e3b]" },
   ];
 
@@ -50,22 +50,22 @@ export default function Home() {
     },
     {
       icon: MapPin,
-      title: "Trouvez Ã  proximitÃ©",
-      desc: "DÃ©couvrez les repas disponibles autour de vous grÃ¢ce Ã  la gÃ©olocalisation.",
+      title: "Trouvez Ã  proximité",
+      desc: "Découvrez les repas disponibles autour de vous grâce Ã  la géolocalisation.",
       bg: "bg-amber-50",
       iconColor: "text-amber-700",
     },
     {
       icon: Users,
       title: "Connectez-vous",
-      desc: "Ã‰changez directement avec les donneurs et rÃ©servez en un instant.",
+      desc: "Échangez directement avec les donneurs et réservez en un instant.",
       bg: "bg-blue-50",
       iconColor: "text-blue-700",
     },
     {
       icon: Shield,
       title: "En toute confiance",
-      desc: "Un systÃ¨me de signalement pour garantir la qualitÃ© et la sÃ©curitÃ©.",
+      desc: "Un système de signalement pour garantir la qualité et la sécurité.",
       bg: "bg-rose-50",
       iconColor: "text-rose-700",
     },
@@ -102,7 +102,7 @@ export default function Home() {
         <div className="absolute inset-0">
           <img
             src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1600&q=80"
-            alt="Repas partagÃ©"
+            alt="Repas partagé"
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-[#004527]/90 via-[#1b5e3b]/70 to-transparent" />
@@ -116,7 +116,7 @@ export default function Home() {
             transition={{ duration: 0.6 }}
           >
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 text-white/90 text-xs font-semibold uppercase tracking-widest mb-4 backdrop-blur-sm">
-              <Leaf className="w-3 h-3" /> SolidaritÃ© Sans FrontiÃ¨res
+              <Leaf className="w-3 h-3" /> Solidarité Sans Frontières
             </span>
             <h1 className="text-4xl md:text-5xl font-extrabold text-white leading-tight">
               Des repas en trop ?<br />
@@ -124,7 +124,7 @@ export default function Home() {
             </h1>
             <p className="mt-5 text-lg text-white/75 leading-relaxed max-w-md">
               Donnez vos surplus alimentaires Ã  des personnes dans le besoin,
-              prÃ¨s de chez vous. Simple, gratuit et solidaire.
+              près de chez vous. Simple, gratuit et solidaire.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link to={createPageUrl("PublishMeal")}>
@@ -177,8 +177,8 @@ export default function Home() {
           <span className="inline-block px-3 py-1 bg-emerald-100 text-emerald-800 text-xs font-semibold uppercase tracking-widest rounded-full mb-3">
             Fonctionnement
           </span>
-          <h2 className="text-2xl md:text-3xl font-extrabold text-[#191c19]">Comment Ã§a marche ?</h2>
-          <p className="mt-2 text-stone-500 text-sm">Une dÃ©marche simple et humaine</p>
+          <h2 className="text-2xl md:text-3xl font-extrabold text-[#191c19]">Comment ça marche ?</h2>
+          <p className="mt-2 text-stone-500 text-sm">Une démarche simple et humaine</p>
         </div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {features.map((f, i) => (
@@ -210,7 +210,7 @@ export default function Home() {
             <div className="flex items-center justify-between mb-8">
               <div>
                 <h2 className="text-2xl md:text-3xl font-extrabold text-[#191c19]">Repas disponibles</h2>
-                <p className="mt-1 text-stone-500 text-sm">Les derniÃ¨res annonces publiÃ©es prÃ¨s de chez vous</p>
+                <p className="mt-1 text-stone-500 text-sm">Les dernières annonces publiées près de chez vous</p>
               </div>
               <Link to={createPageUrl("MealsList")}>
                 <Button variant="ghost" className="text-[#1b5e3b] font-semibold hover:bg-emerald-50">
@@ -243,17 +243,17 @@ export default function Home() {
           <div className="relative z-10">
             <Sparkles className="w-8 h-8 text-[#aef2c4] mx-auto mb-4" />
             <h2 className="text-2xl md:text-4xl font-extrabold text-white">
-              Chaque repas partagÃ© fait la diffÃ©rence
+              Chaque repas partagé fait la différence
             </h2>
             <p className="mt-3 text-white/70 text-base max-w-lg mx-auto">
-              Rejoignez la communautÃ© Repas Solidaire et contribuez Ã  un monde plus gÃ©nÃ©reux.
+              Rejoignez la communauté Repas Solidaire et contribuez Ã  un monde plus généreux.
             </p>
             {!user && (
               <Button
                 className="mt-8 bg-[#aef2c4] hover:bg-[#92d5a9] text-[#002110] font-bold rounded-full h-12 px-8 text-base shadow-lg"
                 asChild
               >
-                <Link to={createPageUrl("Login")}>Rejoindre la communautÃ©</Link>
+                <Link to={createPageUrl("Login")}>Rejoindre la communauté</Link>
               </Button>
             )}
             {user && (
@@ -277,10 +277,10 @@ export default function Home() {
             </div>
             <div>
               <p className="font-bold text-emerald-900 text-sm">Repas Solidaire</p>
-              <p className="text-xs text-stone-400">Une initiative de SolidaritÃ© Sans FrontiÃ¨res</p>
+              <p className="text-xs text-stone-400">Une initiative de Solidarité Sans Frontières</p>
             </div>
           </div>
-          <p className="text-xs text-stone-400">Â© 2026 Repas Solidaire â€” Tous droits rÃ©servÃ©s</p>
+          <p className="text-xs text-stone-400">© 2026 Repas Solidaire "” Tous droits réservés</p>
         </div>
       </footer>
     </div>
