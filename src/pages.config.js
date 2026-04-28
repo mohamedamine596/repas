@@ -47,25 +47,27 @@
  *
  * The mainPage value must match a key in the PAGES object exactly.
  */
-import Home from "./pages/Home";
-import Dashboard from "./pages/Dashboard";
-import PublishMeal from "./pages/PublishMeal";
-import MealsList from "./pages/MealsList";
-import MealDetail from "./pages/MealDetail";
-import MealMap from "./pages/MealMap";
-import Messages from "./pages/Messages";
-import Conversation from "./pages/Conversation";
-import Profile from "./pages/Profile";
-import MealHistory from "./pages/MealHistory";
-import About from "./pages/About";
-import Login from "./pages/Login";
-import AdminVerifications from "./pages/AdminVerifications";
-import OtpVerification from "./pages/OtpVerification";
+import { lazy } from "react";
+
+const Home = lazy(() => import("./pages/Home"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const PublishMeal = lazy(() => import("./pages/PublishMeal"));
+const MealsList = lazy(() => import("./pages/MealsList"));
+const MealDetail = lazy(() => import("./pages/MealDetail"));
+const MealMap = lazy(() => import("./pages/MealMap"));
+const Messages = lazy(() => import("./pages/Messages"));
+const Conversation = lazy(() => import("./pages/Conversation"));
+const Profile = lazy(() => import("./pages/Profile"));
+const MealHistory = lazy(() => import("./pages/MealHistory"));
+const About = lazy(() => import("./pages/About"));
+const Login = lazy(() => import("./pages/Login"));
+const AdminVerifications = lazy(() => import("./pages/AdminVerifications"));
+const OtpVerification = lazy(() => import("./pages/OtpVerification"));
 // Removed: DonorDocumentUpload, DonorQuiz, DonorPendingReview (legacy)
 // Removed: RestaurantDocumentUpload, RestaurantPendingReview (new flow uses instant activation)
-import ForgotPassword from "./pages/ForgotPassword";
-import ResetPassword from "./pages/ResetPassword";
-import RegisterRestaurant from "./pages/RegisterRestaurant";
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const RegisterRestaurant = lazy(() => import("./pages/RegisterRestaurant"));
 import __Layout from "./Layout.jsx";
 
 export const PAGES = {

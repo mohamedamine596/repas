@@ -1,6 +1,7 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "sonner";
 import { QueryClientProvider } from "@tanstack/react-query";
+import { Suspense } from "react";
 import { queryClientInstance } from "@/lib/query-client";
 import { pagesConfig } from "./pages.config";
 import {
@@ -97,34 +98,42 @@ const AuthenticatedApp = () => {
 
   // Render the main app
   return (
-    <Routes>
-      <Route path="/admin/*" element={<AdminGuardedModule />} />
-      <Route
-        path="/"
-        element={<GuardedPage pageName={mainPageKey} Page={MainPage} />}
-      />
-      <Route
-        path="/receveur/dashboard"
-        element={<GuardedPage pageName="Dashboard" Page={Pages.Dashboard} />}
-      />
-      <Route
-        path="/donneur/dashboard"
-        element={<GuardedPage pageName="Dashboard" Page={Pages.Dashboard} />}
-      />
-      <Route
-        path="/restaurant/dashboard"
-        element={<GuardedPage pageName="Dashboard" Page={Pages.Dashboard} />}
-      />
-      {Object.entries(Pages).map(([path, Page]) => (
+    <Suspense
+      fallback={
+        <div className="fixed inset-0 flex items-center justify-center">
+          <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
+        </div>
+      }
+    >
+      <Routes>
+        <Route path="/admin/*" element={<AdminGuardedModule />} />
         <Route
-          key={path}
-          path={`/${path}`}
-          element={<GuardedPage pageName={path} Page={Page} />}
+          path="/"
+          element={<GuardedPage pageName={mainPageKey} Page={MainPage} />}
         />
-      ))}
-      <Route path="/auth/google/callback" element={<GoogleOAuthCallback />} />
-      <Route path="*" element={<PageNotFound />} />
-    </Routes>
+        <Route
+          path="/receveur/dashboard"
+          element={<GuardedPage pageName="Dashboard" Page={Pages.Dashboard} />}
+        />
+        <Route
+          path="/donneur/dashboard"
+          element={<GuardedPage pageName="Dashboard" Page={Pages.Dashboard} />}
+        />
+        <Route
+          path="/restaurant/dashboard"
+          element={<GuardedPage pageName="Dashboard" Page={Pages.Dashboard} />}
+        />
+        {Object.entries(Pages).map(([path, Page]) => (
+          <Route
+            key={path}
+            path={`/${path}`}
+            element={<GuardedPage pageName={path} Page={Page} />}
+          />
+        ))}
+        <Route path="/auth/google/callback" element={<GoogleOAuthCallback />} />
+        <Route path="*" element={<PageNotFound />} />
+      </Routes>
+    </Suspense>
   );
 };
 
