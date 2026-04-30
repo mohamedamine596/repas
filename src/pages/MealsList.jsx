@@ -44,7 +44,7 @@ export default function MealsList() {
   useSEO({
     title: "Repas disponibles près de chez vous",
     description: "Parcourez tous les repas solidaires disponibles en France. Filtrez par type d'aliment, mode de livraison et distance. Repas gratuits offerts par des donateurs vérifiés.",
-    url: "https://repas-sable.vercel.app/MealsList",
+    url: "https://repas-fraiche.vercel.app/MealsList",
   });
   const [search, setSearch] = useState("");
   const [foodFilter, setFoodFilter] = useState("all");

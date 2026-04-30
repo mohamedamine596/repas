@@ -92,7 +92,7 @@ router.get("/google/callback", async (req, res) => {
       return res.redirect(`${FRONTEND_URL}/Login?error=google_no_email`);
     }
 
-    // Only allow google login for receiver accounts
+    // Allow Google login for receiver and restaurant accounts, but keep admin accounts blocked.
     const db = await readDb();
     let user = db.users.find((u) => u.email === googleEmail);
 
@@ -136,11 +136,8 @@ router.get("/google/callback", async (req, res) => {
       };
       db.users.push(user);
     } else {
-      // Existing user — only allow if RECEIVER (not restaurant / admin)
-      if (
-        user.role === USER_ROLES.RESTAURANT ||
-        user.role === USER_ROLES.ADMIN
-      ) {
+      // Existing user — block admin accounts from Google login.
+      if (user.role === USER_ROLES.ADMIN) {
         return res.redirect(
           `${FRONTEND_URL}/Login?error=google_wrong_role`,
         );

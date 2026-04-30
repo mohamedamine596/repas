@@ -36,7 +36,7 @@ export default function About() {
   useSEO({
     title: "À propos — Solidarité Sans Frontières",
     description: "Découvrez Solidarité Sans Frontières et notre mission de lutter contre la faim et le gaspillage alimentaire en France grâce à la plateforme Repas Solidaire.",
-    url: "https://repas-sable.vercel.app/About",
+    url: "https://repas-fraiche.vercel.app/About",
   });
   return (
     <div className="max-w-3xl mx-auto space-y-10 pb-24 md:pb-10">

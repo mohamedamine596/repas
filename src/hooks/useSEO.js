@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-const BASE_URL = "https://repas-sable.vercel.app";
+const BASE_URL = "https://repas-fraiche.vercel.app";
 const DEFAULT_IMAGE = `${BASE_URL}/og-image.jpg`;
 
 /**

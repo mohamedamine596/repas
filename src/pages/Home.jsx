@@ -13,13 +13,13 @@ export default function Home() {
   useSEO({
     title: "Repas Solidaire - Donnez ou trouvez des repas gratuits près de chez vous",
     description: "Plateforme gratuite de partage de repas en France. Donnez vos surplus alimentaires ou trouvez des repas offerts près de chez vous. Anti-gaspillage & solidarité alimentaire.",
-    url: "https://repas-sable.vercel.app/",
+    url: "https://repas-fraiche.vercel.app/",
     jsonLd: {
       "@context": "https://schema.org",
       "@type": "WebPage",
       "name": "Repas Solidaire - Accueil",
       "description": "Plateforme gratuite de partage de repas et de lutte contre le gaspillage alimentaire en France.",
-      "url": "https://repas-sable.vercel.app/",
+      "url": "https://repas-fraiche.vercel.app/",
       "inLanguage": "fr-FR"
     }
   });

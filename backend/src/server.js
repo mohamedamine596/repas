@@ -22,7 +22,7 @@ const configuredOrigins = String(process.env.CORS_ORIGIN || "")
   .split(",")
   .map((item) => item.trim())
   .filter(Boolean);
-const vercelFrontendOrigin = "https://repas-sable.vercel.app";
+const vercelFrontendOrigin = "https://repas-fraiche.vercel.app";
 const defaultAllowedOrigins =
   process.env.NODE_ENV === "production"
     ? [vercelFrontendOrigin, "https://*.vercel.app"]

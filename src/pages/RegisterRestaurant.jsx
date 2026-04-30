@@ -40,7 +40,7 @@ export default function RegisterRestaurant() {
   useSEO({
     title: "Inscrire mon restaurant partenaire",
     description: "Vous avez des surplus alimentaires ? Inscrivez votre restaurant sur Repas Solidaire et contribuez à la lutte contre le gaspillage alimentaire en France.",
-    url: "https://repas-sable.vercel.app/RegisterRestaurant",
+    url: "https://repas-fraiche.vercel.app/RegisterRestaurant",
   });
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);

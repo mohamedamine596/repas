@@ -16,7 +16,7 @@ export default function Login() {
     title: "Connexion & Inscription bénéficiaire",
     description:
       "Connectez-vous ou créez votre compte bénéficiaire gratuit pour accéder aux repas solidaires près de chez vous.",
-    url: "https://repas-sable.vercel.app/Login",
+    url: "https://repas-fraiche.vercel.app/Login",
   });
   const navigate = useNavigate();
   const { login, register, isLoadingAuth } = useAuth();
